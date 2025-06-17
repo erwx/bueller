@@ -1,0 +1,49 @@
+# Examples
+
+## Generate Full Report
+
+```r
+# Render the engagement report
+quarto::quarto_render("engagement_report.qmd", 
+                      execute_params = list(
+                        data_file = "data_files/rds/merged_data.rds",
+                        output_year = 2023
+                      ))
+```
+
+## Analyze Participation Trends
+
+```r
+# Load data and calculate metrics
+data <- readRDS("merged_data.rds")
+district_data <- calc_district_metrics(data)
+trends <- prepare_district_trends(district_data)
+
+# Get ELA participation trends
+ela_trends <- calc_participation_trends(trends, "ELA")
+print(ela_trends)
+```
+
+## Find Districts with Dual Challenges
+
+```r
+# Identify districts with both low participation and high absenteeism
+dual_problems <- calc_dual_challenges(trends, "MATH", 2023)
+print(dual_problems)
+```
+
+## Analyze Student Group Gaps
+
+```r
+# Find student groups with largest participation gaps
+participation_gaps <- calc_group_participation_gaps(trends, "ELA", 2023)
+print(participation_gaps)
+```
+
+## Variance Decomposition
+
+```r
+# Understand between vs within district variation
+variance_results <- calc_variance_decomposition(data)
+print(variance_results)
+```
