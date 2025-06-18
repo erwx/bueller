@@ -409,7 +409,7 @@ if (exists("absenteeism_drivers") && nrow(absenteeism_drivers) > 0) {
 
 ---
 
-## What are the implications for data quality and intervention strategies?
+## What are the implications for data quality?
 
 **The concentration of engagement challenges within specific schools and student groups has important implications for data interpretation and intervention planning.** **When participation or absenteeism problems are driven by a small number of schools within a district, district-wide averages may mask the severity of issues at particular sites while simultaneously understating the performance of schools that are functioning effectively.**
 
