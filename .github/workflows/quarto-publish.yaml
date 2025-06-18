@@ -30,8 +30,9 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           packages: |
-            any::dplyr
             any::ggplot2
+            any::knitr
+            any::rmarkdown
             
       - name: Render Quarto Project
         uses: quarto-dev/quarto-actions/render@v2
