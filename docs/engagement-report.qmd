@@ -28,10 +28,10 @@ county_mask <- !grepl("County Office of Education|County Department of Education
                      bueller_data$DISTRICT_NAME, ignore.case = TRUE)
 df <- bueller_data[county_mask, ]
 
-# Calculate district-level data using package functions
-district_data <- calc_district_metrics(df)
-school_variation <- calc_school_variation(df)
-district_trends <- prepare_district_trends(district_data, params$min_years)
+# Calculate district-level data using package functions (with ::: notation)
+district_data <- bueller:::calc_district_metrics(df)
+school_variation <- bueller:::calc_school_variation(df)
+district_trends <- bueller:::prepare_district_trends(district_data, params$min_years)
 
 # Filter by minimum enrollment
 district_trends <- district_trends[district_trends$students_enrolled >= params$min_enrollment, ]
@@ -75,11 +75,11 @@ summary_stats <- rbind(
 ela_summary <- summary_stats[summary_stats$SUBJECT == "ELA", ]
 math_summary <- summary_stats[summary_stats$SUBJECT == "MATH", ]
 
-# Year-over-year analysis using package functions
-yearly_trends_ela <- calc_participation_trends(district_trends, "ELA")
-yearly_trends_math <- calc_participation_trends(district_trends, "MATH")
-yearly_absent_ela <- calc_absenteeism_trends(district_trends, "ELA")
-yearly_absent_math <- calc_absenteeism_trends(district_trends, "MATH")
+# Year-over-year analysis using package functions (with ::: notation)
+yearly_trends_ela <- bueller:::calc_participation_trends(district_trends, "ELA")
+yearly_trends_math <- bueller:::calc_participation_trends(district_trends, "MATH")
+yearly_absent_ela <- bueller:::calc_absenteeism_trends(district_trends, "ELA")
+yearly_absent_math <- bueller:::calc_absenteeism_trends(district_trends, "MATH")
 
 # School-level driver analysis - PARTICIPATION by subject
 current_year_data <- df[
