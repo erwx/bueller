@@ -4,6 +4,7 @@ author: ""
 format:
   revealjs:
     theme: solarized
+    history: false
 ---
 
 ## {background-image="bueller_hex2.png" background-size="400px" background-position="left"}
