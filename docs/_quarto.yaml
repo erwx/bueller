@@ -10,12 +10,14 @@ website:
     background: primary
     title: "bueller"
     left:
+      - text: "about"
+        href: about.html
       - text: "examples"
         menu:
           - text: "documents"
-            href: documents.html
+            href: engagement-report.html
           - text: "presentations"
-            href: presentations.html
+            href: presentation.html
 
 format:
   html:
