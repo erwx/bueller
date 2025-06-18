@@ -17,7 +17,7 @@ website:
           - text: "documents"
             href: engagement-report.html
           - text: "presentations"
-            href: presentation.html
+            href: bueller-presentation-1.qmd
 
 format:
   html:

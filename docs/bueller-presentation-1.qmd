@@ -1,0 +1,92 @@
+---
+title: ""
+author: ""
+format:
+  revealjs:
+    theme: solarized
+---
+
+## {background-image="bueller_hex2.png" background-size="400px" background-position="left"}
+
+::: {.columns}
+::: {.column width="25%"}
+:::
+::: {.column width="75%"}
+::: {.r-fit-text}
+**bueller**
+:::
+*assessment participation & chronic absenteeism analytics for state education agencies*
+:::
+:::
+
+---
+
+## goal
+
+::: {.r-fit-text}
+formatted data → `bueller_report()` → pretty reports/visuals
+:::
+
+::: {.fragment}
+**one function call produces:**
+
+- multi-year trend analysis
+- school-level variation insights  
+- subgroup gap identification
+:::
+
+---
+
+## Data Structure Requirements {.smaller}
+
+```{.r}
+# Example of properly formatted data
+sample_data <- data.frame(
+  COUNTY_ID = c("01", "01", "01", "01"),
+  DISTRICT_ID = c("001", "001", "001", "001"),
+  SCHOOL_ID = c("0001", "0001", "0001", "0001"),
+  COUNTY_NAME = c("Alameda", "Alameda", "Alameda", "Alameda"),
+  DISTRICT_NAME = c("Oakland Unified", "Oakland Unified", "Oakland Unified", "Oakland Unified"),
+  SCHOOL_NAME = c("Lincoln Elementary", "Lincoln Elementary", "Lincoln Elementary", "Lincoln Elementary"),
+  YEAR = c(2023, 2023, 2023, 2023),
+  SUBJECT = c("ELA", "MATH", "ELA", "MATH"),
+  DISAGGREGATED_GROUP = c("All_Students", "All_Students", "Hispanic", "Hispanic"),
+  PARTICIPATION_RATE = c(94.5, 93.2, 89.1, 88.7),
+  CHRONIC_ABSENT_RATE = c(18.3, 18.3, 22.1, 22.1),
+  STUDENTS_ENROLLED = c(245, 245, 156, 156)
+)
+```
+- **Multi-Year Data**: Each row represents a unique combination of school-year-subject-student group.
+
+- **Subject Coverage**: Each school-year-student group combination should have separate rows for ELA and MATH.
+
+- **Student Groups**: Include "All_Students" as well as disaggregated groups.
+
+---
+
+## bueller_report()
+
+```r
+# Install the package (if not already installed)
+devtools::install_github("erwx/bueller")
+
+# Load the package
+library(bueller)
+
+# Generate your report
+bueller_report(
+  data = your_prepared_data,
+  output_dir = "engagement_reports/"
+)
+```
+
+- Simple function call - just point to your data and specify output location
+
+- Future versions may include a helper function to automatically set up directory structure
+
+---
+
+## Pretty Reports
+
+```{=html}
+<iframe src="engagement-report.html" width="100%" height="600px" style="border: 1px solid #ccc;"></iframe>
