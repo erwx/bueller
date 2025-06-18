@@ -91,3 +91,62 @@ bueller_report(
 
 ```{=html}
 <iframe src="engagement-report.html" width="100%" height="600px" style="border: 1px solid #ccc;"></iframe>
+```
+---
+
+## Toy Data
+
+- **Source:** California Department of Education public data files
+- **Years:** 2018-19 through 2023-24 (No 2019-20. Thanks, COVID)
+- **Chronic Absenteeism Files:** Absenteeism rates
+- **CAASPP Assessment Files:** Participation rates
+- School-level data, *NOT* student-level data
+- Data available as far back as 2016-17
+
+---
+
+## Internal Functions {.smaller}
+
+**`calc_district_metrics()`**
+
+- Aggregates school-level data to district level
+- Calculates enrollment-weighted averages 
+- Creates district-year observations
+
+**`calc_school_variation()`**
+
+- Calculates min/max/standard deviation across schools within districts
+- Identifies districts where few schools drive overall problems
+
+**`calc_participation_trends()`** & **`calc_absenteeism_trends()`**
+
+- Year-to-year trends
+- Participation thresholds (95%?)
+- Absenteeism thresholds (30%?)
+
+---
+
+## Future Enhancements {.smaller}
+
+**AI Integration via ellmer**
+
+- **ellmer package**: R interface to Claude AI models
+- **Intelligent interpretation**: AI-generated insights from statistical patterns
+- **Dynamic narratives**: Automated storytelling that explains trends and findings
+
+**Enhanced Data & Outputs**
+
+- **American Community Survey API**: Zip-code level demographic and economic context
+- **RevealJS presentations**: Automated slide decks for stakeholder meetings
+- **Rich visualizations**: Interactive charts and graphs for better data storytelling
+
+---
+
+## Feedback & Recommendations
+
+**What would be most valuable for users?**
+
+- **Additional functionality**: What features would enhance *your* analysis workflow?
+- **State agency priorities**: What capabilities would best serve *your* accountability needs?
+- **Visualization preferences**: What charts/graphs would make engagement data more actionable?
+- **Integration needs**: How should this fit with existing data systems?
