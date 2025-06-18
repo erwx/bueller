@@ -33,7 +33,12 @@ jobs:
             any::ggplot2
             any::knitr
             any::rmarkdown
+            any::devtools
             
+      - name: Install bueller package
+        run: |
+          R -e "devtools::install('.', dependencies = TRUE)"
+          
       - name: Render Quarto Project
         uses: quarto-dev/quarto-actions/render@v2
         with:

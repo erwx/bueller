@@ -22,7 +22,7 @@ library(knitr)
 library(ggplot2)
 
 # Load and prepare data
-df <- bueller::df
+data(df)
 
 # Filter out County Offices of Education
 county_mask <- !grepl("County Office of Education|County Department of Education", 
