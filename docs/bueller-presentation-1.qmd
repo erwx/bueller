@@ -5,6 +5,7 @@ format:
   revealjs:
     theme: solarized
     history: false
+    slide-number: true
 ---
 
 ## {background-image="bueller_hex2.png" background-size="400px" background-position="left"}
@@ -16,76 +17,118 @@ format:
 ::: {.r-fit-text}
 **bueller**
 :::
-*assessment participation & chronic absenteeism analytics for state education agencies*
+*Assessment Participation & Chronic Absenteeism Analytics for State Education Agencies*
 :::
 :::
 
 ---
 
-## goal
+## Things I Want You to Know
 
-::: {.r-fit-text}
-formatted data → `bueller_report()` → pretty reports/visuals
+::: {.fragment}
+1. What the basic idea behind the package is
+:::
+::: {.fragment}
+2. What kind of data the package needs
+:::
+::: {.fragment}
+3. What the package does
+:::
+::: {.fragment}
+4. What the output looks like
+:::
+::: {.fragment}
+5. What additional features I'd like to add
+:::
+::: {.fragment}
+6. What I've found challenging so far
+:::
+
+---
+
+## My Question for You
+
+::: {style="text-align: center; font-size: 2em; line-height: 1;"}
+What must states understand about their schools before addressing absenteeism and test participation?
+:::
+---
+
+## The Basic Idea
+
+::: {style="text-align: center; font-size: 1em; line-height: 1;"}
+
+SEA analyst has properly formatted data
+
+#### ↓
+
+SEA analyst types `bueller(data); <Enter>`
+
+#### ↓
+
+SEA analyst gets pretty reports & visuals
+
+#### ↓
+SEA analyst has more time to do other important things
+
+:::
+
+---
+
+## Example Data {.smaller}
+
+- **Source:** California Department of Education public data files
+- **Years:** 2018-19 through 2023-24 (Missing 2019-20)
+
+::: {.fragment}
+- **Chronic Absenteeism Files:**
+  + Number of students eligible to be counted
+  + Number of students chronically absent
+  + Chronic absenteeism rate
 :::
 
 ::: {.fragment}
-**one function call produces:**
+- **Assessment Files:**
+  + Number of enrolled students
+  + Number of tested students (ELA & Math)
+  + Participation rate
+:::
 
-- multi-year trend analysis
-- school-level variation insights  
-- subgroup gap identification
+::: {.fragment}
+- School-level data: Each row is a school-year-group observation
+- Data available as far back as 2016-17
 :::
 
 ---
 
-## Data Structure Requirements {.smaller}
-
-```{.r}
-# Example of properly formatted data
-sample_data <- data.frame(
-  COUNTY_ID = c("01", "01", "01", "01"),
-  DISTRICT_ID = c("001", "001", "001", "001"),
-  SCHOOL_ID = c("0001", "0001", "0001", "0001"),
-  COUNTY_NAME = c("Alameda", "Alameda", "Alameda", "Alameda"),
-  DISTRICT_NAME = c("Oakland Unified", "Oakland Unified", "Oakland Unified", "Oakland Unified"),
-  SCHOOL_NAME = c("Lincoln Elementary", "Lincoln Elementary", "Lincoln Elementary", "Lincoln Elementary"),
-  YEAR = c(2023, 2023, 2023, 2023),
-  SUBJECT = c("ELA", "MATH", "ELA", "MATH"),
-  DISAGGREGATED_GROUP = c("All_Students", "All_Students", "Hispanic", "Hispanic"),
-  PARTICIPATION_RATE = c(94.5, 93.2, 89.1, 88.7),
-  CHRONIC_ABSENT_RATE = c(18.3, 18.3, 22.1, 22.1),
-  STUDENTS_ENROLLED = c(245, 245, 156, 156)
-)
-```
-- **Multi-Year Data**: Each row represents a unique combination of school-year-subject-student group.
-
-- **Subject Coverage**: Each school-year-student group combination should have separate rows for ELA and MATH.
-
-- **Student Groups**: Include "All_Students" as well as disaggregated groups.
-
----
-
-## bueller_report()
+## What the Package Does
 
 ```r
-# Install the package (if not already installed)
+# Install the package
 devtools::install_github("erwx/bueller")
 
 # Load the package
 library(bueller)
 
 # Generate your report
-bueller_report(
-  data = your_prepared_data,
-  output_dir = "engagement_reports/"
-)
+bueller(data = your_prepared_data)
 ```
 
-- Simple function call - just point to your data and specify output location
+- Simple function call: Just point to the data
 
-- Future versions may include a helper function to automatically set up directory structure
+- Helper function automatically sets up directory structure to store output files
 
 ---
+
+## What the Package Does
+
+- *How many districts have had participation rates lower than 90% in each of the last 5 years?*
+- *Is the number of schools with chronic absenteeism rates greater than 30% increasing or decreasing?*
+- *Are a few schools driving the low participation rates in this district?*
+- *Which student populations are systematically under-represented in testing data?*
+- *Are engagement gaps widening or narrowing over time?*
+
+---
+
 
 ## Pretty Reports
 
@@ -94,59 +137,17 @@ bueller_report(
 ```
 ---
 
-## Toy Data
-
-- **Source:** California Department of Education public data files
-- **Years:** 2018-19 through 2023-24 (No 2019-20. Thanks, COVID)
-- **Chronic Absenteeism Files:** Absenteeism rates
-- **CAASPP Assessment Files:** Participation rates
-- School-level data, *NOT* student-level data
-- Data available as far back as 2016-17
-
----
-
-## Internal Functions {.smaller}
-
-**`calc_district_metrics()`**
-
-- Aggregates school-level data to district level
-- Calculates enrollment-weighted averages 
-- Creates district-year observations
-
-**`calc_school_variation()`**
-
-- Calculates min/max/standard deviation across schools within districts
-- Identifies districts where few schools drive overall problems
-
-**`calc_participation_trends()`** & **`calc_absenteeism_trends()`**
-
-- Year-to-year trends
-- Participation thresholds (95%?)
-- Absenteeism thresholds (30%?)
-
----
-
 ## Future Enhancements {.smaller}
 
-**AI Integration via ellmer**
-
-- **ellmer package**: R interface to Claude AI models
-- **Intelligent interpretation**: AI-generated insights from statistical patterns
-- **Dynamic narratives**: Automated storytelling that explains trends and findings
-
-**Enhanced Data & Outputs**
-
+- **AI Integration**: R interface to Claude AI models
 - **American Community Survey API**: Zip-code level demographic and economic context
 - **RevealJS presentations**: Automated slide decks for stakeholder meetings
-- **Rich visualizations**: Interactive charts and graphs for better data storytelling
+- **Like Schools/Like Districts**: Group schools/districts to get more meaningful comparisons of absenteeism and participation rates
+  + propensity score matching?
+  + k-means clustering?
 
----
+## My Question for You (Again)
 
-## Feedback & Recommendations
-
-**What would be most valuable for users?**
-
-- **Additional functionality**: What features would enhance *your* analysis workflow?
-- **State agency priorities**: What capabilities would best serve *your* accountability needs?
-- **Visualization preferences**: What charts/graphs would make engagement data more actionable?
-- **Integration needs**: How should this fit with existing data systems?
+::: {style="text-align: center; font-size: 2em; line-height: 1;"}
+What must states understand about their schools before addressing absenteeism and test participation?
+:::
