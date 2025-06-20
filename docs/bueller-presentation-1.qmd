@@ -25,24 +25,17 @@ format:
 
 ## Things I Want You to Know
 
-::: {.fragment}
 1. What the basic idea behind the package is
-:::
-::: {.fragment}
+
 2. What kind of data the package needs
-:::
-::: {.fragment}
+
 3. What the package does
-:::
-::: {.fragment}
+
 4. What the output looks like
-:::
-::: {.fragment}
+
 5. What additional features I'd like to add
-:::
-::: {.fragment}
+
 6. What I've found challenging so far
-:::
 
 ---
 
@@ -137,17 +130,27 @@ bueller(data = your_prepared_data)
 ```
 ---
 
-## Future Enhancements {.smaller}
+## Additional Features I'd Like to Add
 
-- **AI Integration**: R interface to Claude AI models
+- **Like Schools/Like Districts**: Group schools/districts to get more meaningful comparisons of absenteeism and participation rates
 - **American Community Survey API**: Zip-code level demographic and economic context
 - **RevealJS presentations**: Automated slide decks for stakeholder meetings
-- **Like Schools/Like Districts**: Group schools/districts to get more meaningful comparisons of absenteeism and participation rates
-  + propensity score matching?
-  + k-means clustering?
 
-## My Question for You (Again)
+## Challenges {.smaller}
 
-::: {style="text-align: center; font-size: 2em; line-height: 1;"}
-What must states understand about their schools before addressing absenteeism and test participation?
+::: {.columns}
+::: {.column width="60%"}
+- SEA analysts already know what they care about
+  + How do I decide what is "important"
+- Ease of Use vs. Flexibility
+  + Everyone likes things that just work...
+  + ...but savvy users might want more options
+- R interfaces nicely with AI models
+  + Do I board the AI hype train?
 :::
+
+::: {.column width="40%"}
+![](think.jpg){height="500px"}
+:::
+:::
+
