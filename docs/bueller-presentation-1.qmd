@@ -135,6 +135,7 @@ bueller(data = your_prepared_data)
 - **Like Schools/Like Districts**: Group schools/districts to get more meaningful comparisons of absenteeism and participation rates
 - **American Community Survey API**: Zip-code level demographic and economic context
 - **RevealJS presentations**: Automated slide decks for stakeholder meetings
+- **Going Mobile**: Make a platform that reports relevant metrics directly to non-technical stakeholders
 
 ## Challenges {.smaller}
 
