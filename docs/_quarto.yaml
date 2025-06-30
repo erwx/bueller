@@ -10,14 +10,12 @@ website:
     background: primary
     title: "bueller"
     left:
-      - text: "about"
+      - text: "About"
         href: about.html
-      - text: "examples"
-        menu:
-          - text: "documents"
-            href: engagement-template.html
-          - text: "presentations"
-            href: bueller-presentation-1.qmd
+      - text: "Documents"
+        href: documents.qmd
+      - text: "Presentations"
+        href: presentations.qmd
 
 format:
   html:

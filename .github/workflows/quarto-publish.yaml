@@ -50,7 +50,7 @@ jobs:
 
       - name: Copy DOCX to built site
         run: |
-          cp inst/templates/engagement-template.docx docs/_site/
+          cp inst/templates/engagement-template.docx docs/
           
       - name: Upload to GitHub Pages
         uses: actions/upload-pages-artifact@v3
