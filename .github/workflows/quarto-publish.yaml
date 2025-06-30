@@ -39,6 +39,11 @@ jobs:
         run: |
           R -e "devtools::install('.', dependencies = TRUE)"
           
+      - name: Copy example files to docs before render
+        run: |
+          cp inst/templates/engagement-template.html docs/
+          cp inst/templates/engagement-template.docx docs/
+          
       - name: Render Quarto Project
         uses: quarto-dev/quarto-actions/render@v2
         with:
