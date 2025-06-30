@@ -42,12 +42,15 @@ jobs:
       - name: Copy example files to docs before render
         run: |
           cp inst/templates/engagement-template.html docs/
-          cp inst/templates/engagement-template.docx docs/
           
       - name: Render Quarto Project
         uses: quarto-dev/quarto-actions/render@v2
         with:
           path: docs
+
+      - name: Copy DOCX to built site
+        run: |
+          cp inst/templates/engagement-template.docx docs/_site/
           
       - name: Upload to GitHub Pages
         uses: actions/upload-pages-artifact@v3
