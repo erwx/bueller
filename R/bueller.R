@@ -27,7 +27,7 @@ bueller <- function(
 ) {
   
   # Prepare all analysis results
-  results <- bueller_prep(data, min_enrollment)
+  results <- prep(data, min_enrollment)
   
   # Get path to the Quarto template
   template_path <- system.file("templates", "engagement-template.qmd", package = "bueller")

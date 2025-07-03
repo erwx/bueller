@@ -4,7 +4,7 @@
 \alias{bueller}
 \title{Generate Student Engagement Report}
 \usage{
-bueller(data, output_dir = ".", min_enrollment = 30)
+bueller(data, output_dir = NULL, min_enrollment = 30)
 }
 \arguments{
 \item{data}{A data frame with the merged engagement data}

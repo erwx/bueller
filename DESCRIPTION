@@ -9,7 +9,9 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
     quarto,
-    stats
+    stats,
+    ellmer,
+    jsonlite
 Suggests:
     testthat
 Depends: 
