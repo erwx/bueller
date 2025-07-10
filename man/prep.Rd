@@ -2,20 +2,19 @@
 % Please edit documentation in R/prep.R
 \name{prep}
 \alias{prep}
-\title{Prepare all analysis components for engagement report}
+\title{Prepare Comprehensive Chronic Absenteeism Analysis}
 \usage{
-prep(data, min_enrollment = 30)
+prep(data)
 }
 \arguments{
-\item{data}{Raw merged dataset}
-
-\item{min_enrollment}{Minimum enrollment threshold (default: 30)}
+\item{data}{Student-level data frame with demographic columns and CHRONIC_ABSENT indicator}
 }
 \value{
 List containing all analysis results for report generation
 }
 \description{
-This function does all the heavy analytical work that was previously
-embedded in the Quarto template. It returns a structured list of results
-that can be passed to the template for formatting.
+Orchestrates all chronic absenteeism analysis functions to generate
+a complete set of results for reporting. Processes student-level data
+through all geographic levels and analytical perspectives.
 }
+\keyword{internal}

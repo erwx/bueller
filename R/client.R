@@ -81,7 +81,8 @@ client <- function(data) {
     # Get response (chat object maintains conversation history automatically)
     tryCatch({
       cat("\U0001F916 The robot says... \n")
-      chat$chat(user_input)
+      response <- chat$chat(user_input)
+      cat(response, "\n\n")  # Print the response
     }, error = function(e) {
       cat("\nSorry, I encountered an error:", e$message, "\n")
       if (grepl("too long|token", e$message, ignore.case = TRUE)) {

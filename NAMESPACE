@@ -2,7 +2,6 @@
 
 export(bueller)
 export(client)
-export(prep)
 importFrom(stats,aggregate)
 importFrom(stats,complete.cases)
 importFrom(stats,cor)

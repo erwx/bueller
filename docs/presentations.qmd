@@ -1,5 +1,5 @@
 ---
-title: "Sample Engagement Presentations"
+title: "Presentations"
 ---
 
-- *(coming soon)*
+- [update 2](bueller-presentation-2.qmd)

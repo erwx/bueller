@@ -1,13 +1,11 @@
-#' Generate Student Engagement Report
+#' Generate Student Absenteeism Report
 #'
-#' Creates a comprehensive HTML report analyzing assessment participation and 
-#' chronic absenteeism patterns. This is the main function users should call.
+#' Creates a comprehensive HTML report analyzing chronic absenteeism patterns
+#' across geographic levels and student subgroups. This is the main function users should call.
 #'
-#' @param data A data frame with the merged engagement data
-#' @param output_dir Directory where the report should be saved (default: current directory)
-#' @param min_enrollment Minimum enrollment threshold for district inclusion (default: 30)
+#' @param data A data frame with student-level absenteeism data
 #'
-#' @return Path to the generated HTML report
+#' @return Path to the generated output directory
 #' @export
 #'
 #' @importFrom stats aggregate complete.cases cor quantile sd var median
@@ -15,87 +13,75 @@
 #' @examples
 #' \dontrun{
 #' # Generate HTML report with Word download option
-#' bueller(merged_data)
-#' 
-#' # Specify output directory and parameters
-#' bueller(merged_data, output_dir = "reports/", min_enrollment = 50)
+#' bueller(df)
 #' }
-bueller <- function(
-  data,
-  output_dir = NULL,
-  min_enrollment = 30
-) {
+bueller <- function(data) {
   
   # Prepare all analysis results
-  results <- prep(data, min_enrollment)
+  results <- prep(data)
   
   # Get path to the Quarto template
-  template_path <- system.file("templates", "engagement-template.qmd", package = "bueller")
+  template_path <- system.file(
+    "templates",
+    "absenteeism.qmd",
+    package = "bueller"
+  )
+
   if (template_path == "") {
-    stop("Template not found. Make sure the bueller package is properly installed.")
-  }
-  
-  # If no output_dir specified, use template directory
-  if (is.null(output_dir)) {
-    output_dir <- dirname(template_path)
-  } else {
-    # Normalize output directory path
-    output_dir <- normalizePath(output_dir, mustWork = FALSE)
-    
-    # Create output directory if it doesn't exist
-    if (!dir.exists(output_dir)) {
-      dir.create(output_dir, recursive = TRUE)
-    }
+    stop("Template not found.")
   }
   
   # Create temporary RDS file for the template
   temp_results_file <- tempfile(fileext = ".rds")
   saveRDS(results, temp_results_file)
   
-  # Check if we're rendering to the same directory as the template
-  template_dir <- dirname(template_path)
-  if (normalizePath(output_dir) == normalizePath(template_dir)) {
-    # Render directly from template location - no copying needed
-    quarto::quarto_render(
-      input = template_path,
-      execute_params = list(
-        results_file = temp_results_file
-      )
-    )
-  } else {
-    # Save current working directory
-    old_wd <- getwd()
-    
-    # Change to output directory and do all work from there
-    setwd(output_dir)
-    
-    tryCatch({
-      # Copy template to output directory so Quarto renders there
-      local_template <- file.path(getwd(), "engagement-template.qmd")
-      file.copy(template_path, local_template)
-      
-      # Render the local copy
-      quarto::quarto_render(
-        input = local_template,
-        execute_params = list(
-          results_file = temp_results_file
-        )
-      )
-      
-      # Clean up temp template copy
-      unlink(local_template)
-      
-    }, finally = {
-      # Always restore working directory
-      setwd(old_wd)
-    })
-  }
+  # Render the template in its original location
+  quarto::quarto_render(
+    input          = template_path,
+    execute_params = list(results_file = temp_results_file)
+  )
   
   # Clean up temp results file
   unlink(temp_results_file)
   
-  # Return path to the generated file
-  final_file <- file.path(output_dir, "engagement-template.html")
-  message("HTML report generated: ", final_file)
-  return(final_file)
+  # Set up output directory in user's home folder
+  home_dir  <- path.expand("~")
+  base_name <- "absenteeism-files"
+  counter   <- 1
+  
+  # Find next available versioned folder
+  while (dir.exists(file.path(home_dir, paste0(base_name, "-", counter)))) {
+    counter <- counter + 1
+  }
+  
+  # Create the output directory
+  output_dir <- file.path(
+    home_dir,
+    paste0(base_name, "-", counter)
+  )
+  dir.create(output_dir, recursive = TRUE)
+  
+  template_dir  <- dirname(template_path)
+  files_to_copy <- c(
+    "absenteeism.html",
+    "absenteeism.docx"
+  )
+  
+  # Copy each file if it exists
+  for (file_name in files_to_copy) {
+
+    source_file <- file.path(template_dir, file_name)
+
+    if (file.exists(source_file)) {
+      dest_file <- file.path(output_dir, file_name)
+      file.copy(source_file, dest_file, overwrite = TRUE)
+      message("Created: ", dest_file)
+    }
+
+  }
+  
+  # Return path to the output directory
+  message("Reports generated in: ", output_dir)
+  return(output_dir)
 }
+

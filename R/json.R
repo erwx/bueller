@@ -5,7 +5,6 @@
 #' @param results Output from prep()
 #' @return JSON string containing curated analysis data
 json <- function(results) {
-  # Build a focused but comprehensive data structure
   analysis_data <- list(
     
     # Basic scope

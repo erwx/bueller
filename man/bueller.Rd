@@ -2,30 +2,23 @@
 % Please edit documentation in R/bueller.R
 \name{bueller}
 \alias{bueller}
-\title{Generate Student Engagement Report}
+\title{Generate Student Absenteeism Report}
 \usage{
-bueller(data, output_dir = NULL, min_enrollment = 30)
+bueller(data)
 }
 \arguments{
-\item{data}{A data frame with the merged engagement data}
-
-\item{output_dir}{Directory where the report should be saved (default: current directory)}
-
-\item{min_enrollment}{Minimum enrollment threshold for district inclusion (default: 30)}
+\item{data}{A data frame with student-level absenteeism data}
 }
 \value{
-Path to the generated HTML report
+Path to the generated output directory
 }
 \description{
-Creates a comprehensive HTML report analyzing assessment participation and
-chronic absenteeism patterns. This is the main function users should call.
+Creates a comprehensive HTML report analyzing chronic absenteeism patterns
+across geographic levels and student subgroups. This is the main function users should call.
 }
 \examples{
 \dontrun{
 # Generate HTML report with Word download option
-bueller(merged_data)
-
-# Specify output directory and parameters
-bueller(merged_data, output_dir = "reports/", min_enrollment = 50)
+bueller(df)
 }
 }
