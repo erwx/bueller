@@ -1,5 +1,0 @@
----
-title: "Presentations"
----
-
-- [update 2](bueller-presentation-2.qmd)

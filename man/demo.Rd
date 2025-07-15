@@ -2,18 +2,22 @@
 % Please edit documentation in R/demo.R
 \name{demo}
 \alias{demo}
-\title{Calculate School-Level Demographic Composition}
+\title{Identify demographic concentration within schools}
 \usage{
-demo(data)
+demo(data, baseline_year, concentration_threshold = 0.2)
 }
 \arguments{
-\item{data}{Student-level data frame with demographic columns}
+\item{data}{Student-level data frame}
+
+\item{baseline_year}{Numeric year for analysis}
+
+\item{concentration_threshold}{Numeric threshold (default 0.4)}
 }
 \value{
-Data frame with demographic percentages by school and year
+List containing demographic concentration analysis
 }
 \description{
-Calculates demographic composition percentages for each school by year.
-Uses efficient aggregation for fast processing.
+Internal function to identify schools where specific demographic groups
+account for disproportionate shares of chronic absenteeism.
 }
 \keyword{internal}

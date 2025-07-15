@@ -1,5 +1,0 @@
----
-title: "Documents"
----
-
-- [Fake Data, 2023-24](absenteeism.html)
