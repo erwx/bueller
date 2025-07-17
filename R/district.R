@@ -521,8 +521,8 @@ district_trends <- function(district_data) {
   }
   
   # Calculate year-over-year changes
-  overall_trends$YOY_RATE_CHANGE <- c(NA, diff(overall_trends$CHRONIC_RATE))
-  overall_trends$YOY_COUNT_CHANGE <- c(NA, diff(overall_trends$CHRONIC_ABSENT))
+  overall_trends$RATE_CHANGE <- c(NA, diff(overall_trends$CHRONIC_RATE))
+  overall_trends$COUNT_CHANGE <- c(NA, diff(overall_trends$CHRONIC_ABSENT))
   
   # Demographic group trends
   demo_cols <- c("MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", 
@@ -561,8 +561,8 @@ district_trends <- function(district_data) {
     }
     
     if (nrow(group_trends) > 1) {
-      group_trends$YOY_RATE_CHANGE <- c(NA, diff(group_trends$CHRONIC_RATE))
-      group_trends$YOY_COUNT_CHANGE <- c(NA, diff(group_trends$CHRONIC_ABSENT))
+      group_trends$RATE_CHANGE <- c(NA, diff(group_trends$CHRONIC_RATE))
+      group_trends$COUNT_CHANGE <- c(NA, diff(group_trends$CHRONIC_ABSENT))
       demographic_trends[[name]] <- group_trends
     }
   }
@@ -580,11 +580,11 @@ district_trends <- function(district_data) {
   for (name in names(demographic_trends)) {
     group_data <- demographic_trends[[name]]
     if (nrow(group_data) >= 2) {
-      latest_change <- tail(group_data$YOY_RATE_CHANGE, 1)
+      latest_change <- tail(group_data$RATE_CHANGE, 1)
       if (!is.na(latest_change)) {
         demo_row <- data.frame(
           GROUP = name,
-          YOY_RATE_CHANGE = latest_change,
+          RATE_CHANGE = latest_change,
           stringsAsFactors = FALSE
         )
         demo_yoy_changes <- rbind(demo_yoy_changes, demo_row)
