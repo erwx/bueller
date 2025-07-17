@@ -2,6 +2,7 @@
 #'
 #' @param data_file Path to student-level chronic absence data file
 #' @param district_name Name of district to analyze
+#' @importFrom utils read.csv
 #' @export
 render_district <- function(data_file, district_name) {
   # Check data file exists
@@ -44,6 +45,13 @@ render_district <- function(data_file, district_name) {
   grades_text <- text_grades(analysis_results)
   benchmarks_text <- text_benchmarks(analysis_results)
   
+  # Generate county context text if available
+  if (!is.null(analysis_results$county_context)) {
+    county_context_text <- text_county_context(analysis_results)
+  } else {
+    county_context_text <- "County context data is not available for this analysis."
+  }
+  
   # Create output filename
   safe_district_name <- gsub("[^A-Za-z0-9]", "_", district_name)
   output_file <- paste0(safe_district_name, "_report.html")
@@ -51,7 +59,7 @@ render_district <- function(data_file, district_name) {
   # Create temporary QMD file
   temp_qmd <- file.path(getwd(), "temp_district_report.qmd")
   
-  # Generate QMD content (exact same as original render.txt)
+  # Generate QMD content with county context section
   qmd_content <- c(
     "---",
     paste0("title: \"", district_name, " Chronic Absence Report\""),
@@ -123,7 +131,48 @@ render_district <- function(data_file, district_name) {
     "knitr::kable(metrics_data,",
     "             col.names = c('Metric', 'Value'),",
     "             caption = 'District Performance Metrics')",
-    "```",
+    "```"
+  )
+  
+  # Add county context section if available
+  if (!is.null(analysis_results$county_context)) {
+    county_context_section <- c(
+      "",
+      "# Community Context",
+      "",
+      county_context_text,
+      "",
+      "```{r county-context-table}",
+      "county_data <- data.frame(",
+      "  Metric = c(",
+      "    'County',",
+      "    'Median Household Income',",
+      "    'Poverty Rate',",
+      "    'Housing Cost Burden (30%+)',",
+      "    'Housing Cost Burden (50%+)',",
+      "    'Public Assistance Rate',",
+      "    'District Disadvantaged Rate'",
+      "  ),",
+      "  Value = c(",
+      paste0("    '", analysis_results$county_context$county_name, " County',"),
+      paste0("    '$", format(analysis_results$county_context$county_median_income, big.mark = ","), "',"),
+      paste0("    '", round(analysis_results$county_context$county_poverty_rate * 100, 1), "%',"),
+      paste0("    '", round(analysis_results$county_context$county_housing_burden_30 * 100, 1), "%',"),
+      paste0("    '", round(analysis_results$county_context$county_housing_burden_50 * 100, 1), "%',"),
+      paste0("    '", round(analysis_results$county_context$county_assistance_rate * 100, 1), "%',"),
+      paste0("    '", round(analysis_results$county_context$district_disadvantage_rate * 100, 1), "%'"),
+      "  )",
+      ")",
+      "knitr::kable(county_data,",
+      "             col.names = c('Metric', 'Value'),",
+      "             caption = paste0('", analysis_results$county_context$county_name, " County Economic Context (ACS ", analysis_results$county_context$acs_year, ")'))",
+      "```"
+    )
+    qmd_content <- c(qmd_content, county_context_section)
+  }
+  
+  # Continue with remaining sections
+  remaining_sections <- c(
     "",
     "# School Analysis",
     "",
@@ -215,10 +264,12 @@ render_district <- function(data_file, district_name) {
     benchmarks_text
   )
   
+  qmd_content <- c(qmd_content, remaining_sections)
+  
   # Write QMD file
   writeLines(qmd_content, temp_qmd)
   
-  # Render report (exact same as original render.txt)
+  # Render report
   system(sprintf('quarto render "%s" --output "%s"', temp_qmd, output_file))
   
   # Cleanup

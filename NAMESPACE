@@ -2,5 +2,6 @@
 
 export(analyze_district)
 export(render_district)
+importFrom(jsonlite,fromJSON)
 importFrom(stats,median)
 importFrom(utils,read.csv)

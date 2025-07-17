@@ -33,6 +33,22 @@ analyze_district <- function(data, district_name) {
   benchmarks <- district_benchmarks(district_data, data, 
                                    current_year)
   
+  # Get county context
+  county_context <- NULL
+  tryCatch({
+    # Get county name from district data
+    county_name <- unique(district_data[["COUNTY_NAME"]])[1]
+    
+    if (!is.na(county_name) && nchar(county_name) > 0) {
+      cat("Fetching ACS data for", county_name, "County...\n")
+      county_context <- district_county_context(district_data, county_name, 2023)
+    } else {
+      warning("County name not found in district data")
+    }
+  }, error = function(e) {
+    warning("Failed to fetch ACS data: ", e$message)
+  })
+  
   # Combine results
   result <- list(
     district_name = district_name,
@@ -43,7 +59,8 @@ analyze_district <- function(data, district_name) {
     schools = schools,
     demographics = demographics,
     grades = grades,
-    benchmarks = benchmarks
+    benchmarks = benchmarks,
+    county_context = county_context
   )
   
   return(result)
@@ -54,6 +71,7 @@ analyze_district <- function(data, district_name) {
 #' @param district_data Filtered district data
 #' @param current_year Current year
 #' @return List with overview metrics
+#' @keywords internal
 district_overview <- function(district_data, current_year) {
   # Multi-year enrollment trends
   years <- sort(unique(district_data[["YEAR"]]))
@@ -107,6 +125,7 @@ district_overview <- function(district_data, current_year) {
 #' @param full_data Complete dataset
 #' @param current_year Current year
 #' @return List with performance metrics
+#' @keywords internal
 district_performance <- function(district_data, full_data, 
                                 current_year) {
   # Current district rate
@@ -190,6 +209,7 @@ district_performance <- function(district_data, full_data,
 #' @param district_data Filtered district data
 #' @param current_year Current year
 #' @return List with school-level analysis
+#' @keywords internal
 district_schools <- function(district_data, current_year) {
   current_data <- district_data[
     district_data[["YEAR"]] == current_year, 
@@ -253,6 +273,7 @@ district_schools <- function(district_data, current_year) {
 #' @param district_data Filtered district data
 #' @param current_year Current year
 #' @return List with demographic analysis
+#' @keywords internal
 district_demographics <- function(district_data, current_year) {
   current_data <- district_data[
     district_data[["YEAR"]] == current_year, 
@@ -310,6 +331,7 @@ district_demographics <- function(district_data, current_year) {
 #' @param district_data Filtered district data
 #' @param current_year Current year
 #' @return List with grade-level analysis
+#' @keywords internal
 district_grades <- function(district_data, current_year) {
   current_data <- district_data[
     district_data[["YEAR"]] == current_year, 
@@ -349,6 +371,7 @@ district_grades <- function(district_data, current_year) {
 #' @param full_data Complete dataset
 #' @param current_year Current year
 #' @return List with benchmark comparisons
+#' @keywords internal
 district_benchmarks <- function(district_data, full_data, 
                                current_year) {
   # Current district metrics
@@ -454,6 +477,54 @@ district_benchmarks <- function(district_data, full_data,
     peer_group_size = peer_count,
     peer_rank = district_rank,
     peer_median = peer_median
+  )
+  
+  return(result)
+}
+
+#' Analyze district in county context
+#'
+#' @param district_data Filtered district data
+#' @param county_name County name
+#' @param acs_year ACS year
+#' @return List with county context analysis
+#' @keywords internal
+district_county_context <- function(district_data, county_name, acs_year) {
+  
+  # Get ACS data for county
+  acs_data <- get_county_acs_data(county_name, acs_year)
+  
+  # Current year district data
+  current_year <- max(district_data[["YEAR"]])
+  current_data <- district_data[district_data[["YEAR"]] == current_year, ]
+  
+  # District metrics
+  district_rate <- sum(current_data[["CHRONIC_ABSENT"]]) / nrow(current_data)
+  district_disadvantage <- sum(current_data[["DISADVANTAGE"]]) / nrow(current_data)
+  
+  # County context analysis
+  result <- list(
+    county_name = county_name,
+    acs_year = acs_year,
+    
+    # ACS metrics
+    county_median_income = acs_data$median_household_income,
+    county_poverty_rate = acs_data$poverty_rate,
+    county_housing_burden_30 = acs_data$housing_cost_burden_30_plus,
+    county_housing_burden_50 = acs_data$housing_cost_burden_50_plus,
+    county_assistance_rate = acs_data$public_assistance_rate,
+    
+    # District vs county comparison
+    district_chronic_rate = district_rate,
+    district_disadvantage_rate = district_disadvantage,
+    
+    # Context flags
+    high_poverty_county = ifelse(is.na(acs_data$poverty_rate), NA, 
+                                acs_data$poverty_rate > 0.15),
+    high_housing_burden = ifelse(is.na(acs_data$housing_cost_burden_30_plus), NA,
+                                acs_data$housing_cost_burden_30_plus > 0.30),
+    low_income_county = ifelse(is.na(acs_data$median_household_income), NA,
+                              acs_data$median_household_income < 60000)
   )
   
   return(result)
