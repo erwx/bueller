@@ -186,12 +186,13 @@ func main() {
 			for {
 				select {
 				case <-stop:
+					fmt.Print("\r\033[2K")
 					fmt.Println("Done!")
 					return
 				default:
 					fmt.Printf("\r%s Working...", spinner[i])
 					i = (i + 1) % len(spinner)
-					time.Sleep(500 * time.Millisecond)
+					time.Sleep(150 * time.Millisecond)
 				}
 			}
 
@@ -213,12 +214,13 @@ func main() {
 	for {
 		select {
 		case <-stop:
+			fmt.Print("\r\033[2K")
 			fmt.Println("Done!")
 			return
 		default:
 			fmt.Printf("\r%s Working...", spinner[i])
 			i = (i + 1) % len(spinner)
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(150 * time.Millisecond)
 		}
 	}
 }
