@@ -2,7 +2,6 @@
 #'
 #' @param data_file Path to student-level chronic absence data file
 #' @param district_name Name of district to analyze
-#' @importFrom utils read.csv
 #' @export
 render_district <- function(data_file, district_name) {
   # Check data file exists
@@ -60,6 +59,7 @@ render_district <- function(data_file, district_name) {
     "  html:",
     "    toc: true",
     "    embed-resources: true",
+    "    self-contained: true",
     "    theme: minty",
     "date: today",
     "execute:",

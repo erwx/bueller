@@ -66,7 +66,7 @@ if (!require('bueller', quietly = TRUE)) {
     if (!require('devtools', quietly = TRUE)) {
         install.packages('devtools', repos = 'https://cloud.r-project.org')
     }
-    devtools::install_github('erwx/bueller')
+    devtools::install_github('your-username/bueller')
     library(bueller)
     cat('bueller package installed successfully.\n')
 } else {
@@ -75,7 +75,7 @@ if (!require('bueller', quietly = TRUE)) {
 "
 
 # Check if package installation was successful
-if [[ $? -ne 0 ]]; then
+if [ $? -ne 0 ]; then
     echo "Error: Failed to install or load bueller package"
     exit 1
 fi
