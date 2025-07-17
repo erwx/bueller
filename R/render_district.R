@@ -40,6 +40,7 @@ render_district <- function(data_file, district_name) {
   executive_text <- text_executive(analysis_results)
   overview_text <- text_overview(analysis_results)
   metrics_text <- text_metrics(analysis_results)
+  trends_text <- text_trends(analysis_results)
   schools_text <- text_schools(analysis_results)
   demographics_text <- text_demographics(analysis_results)
   grades_text <- text_grades(analysis_results)
@@ -131,6 +132,26 @@ render_district <- function(data_file, district_name) {
     "knitr::kable(metrics_data,",
     "             col.names = c('Metric', 'Value'),",
     "             caption = 'District Performance Metrics')",
+    "```",
+    "",
+    "## Year-over-Year Trends",
+    "",
+    trends_text,
+    "",
+    "```{r trends-table}",
+    "if (analysis_results$trends$has_trends && nrow(analysis_results$trends$demo_yoy_changes) > 0) {",
+    "  trends_data <- data.frame(",
+    "    Group = analysis_results$trends$demo_yoy_changes$GROUP,",
+    "    Change = analysis_results$trends$demo_yoy_changes$YOY_RATE_CHANGE",
+    "  )",
+    "  trends_data$Change <- paste0(ifelse(trends_data$Change >= 0, '+', ''), round(trends_data$Change * 100, 1), 'pp')",
+    "  trends_data <- trends_data[order(trends_data$Change, decreasing = TRUE), ]",
+    "  knitr::kable(trends_data,",
+    "               col.names = c('Demographic Group', 'Year-over-Year Change'),",
+    "               caption = paste0('Demographic Group Trends (', analysis_results$trends$prev_year, ' to ', analysis_results$trends$current_year, ')'))",
+    "} else {",
+    "  cat('Trend data not available for demographic groups.')",
+    "}",
     "```"
   )
   
@@ -179,26 +200,20 @@ render_district <- function(data_file, district_name) {
     schools_text,
     "",
     "```{r school-table}",
+    "# Show top 5 schools by chronic absence count",
+    "top_schools <- head(analysis_results$schools$school_summary, 5)",
     "school_data <- data.frame(",
-    "  School = c(" ,
-    paste0("    \"", analysis_results$schools$school_summary$SCHOOL_NAME, "\"", collapse = ",\n"),
-    "  ),",
-    "  Students = c(",
-    paste0("    ", analysis_results$schools$school_summary$TOTAL_STUDENTS, collapse = ",\n"),
-    "  ),",
-    "  Chronic_Absent = c(",
-    paste0("    ", analysis_results$schools$school_summary$CHRONIC_ABSENT, collapse = ",\n"),
-    "  ),",
-    "  Rate = c(",
-    paste0("    ", round(analysis_results$schools$school_summary$CHRONIC_RATE, 3), collapse = ",\n"),
-    "  )",
+    "  School = top_schools$SCHOOL_NAME,",
+    "  Students = top_schools$TOTAL_STUDENTS,",
+    "  Chronic_Absent = top_schools$CHRONIC_ABSENT,",
+    "  Rate = top_schools$CHRONIC_RATE",
     ")",
     "school_data$Students <- format(school_data$Students, big.mark = ',')",
     "school_data$Chronic_Absent <- format(school_data$Chronic_Absent, big.mark = ',')",
     "school_data$Rate <- paste0(round(school_data$Rate * 100, 1), '%')",
     "knitr::kable(school_data,",
     "             col.names = c('School', 'Total Students', 'Chronic Absent', 'Rate'),",
-    "             caption = 'School-Level Chronic Absence Summary')",
+    "             caption = 'Top 5 Schools by Chronic Absence Count')",
     "```",
     "",
     "# Demographic Analysis",

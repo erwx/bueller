@@ -32,6 +32,7 @@ analyze_district <- function(data, district_name) {
   grades <- district_grades(district_data, current_year)
   benchmarks <- district_benchmarks(district_data, data, 
                                    current_year)
+  trends <- district_trends(district_data)
   
   # Get county context
   county_context <- NULL
@@ -60,6 +61,7 @@ analyze_district <- function(data, district_name) {
     demographics = demographics,
     grades = grades,
     benchmarks = benchmarks,
+    trends = trends,
     county_context = county_context
   )
   
@@ -477,6 +479,127 @@ district_benchmarks <- function(district_data, full_data,
     peer_group_size = peer_count,
     peer_rank = district_rank,
     peer_median = peer_median
+  )
+  
+  return(result)
+}
+
+#' District year-over-year trends analysis
+#'
+#' @param district_data Filtered district data
+#' @return List with year-over-year trend analysis
+#' @importFrom utils tail
+#' @keywords internal
+district_trends <- function(district_data) {
+  years <- sort(unique(district_data[["YEAR"]]))
+  
+  if (length(years) < 2) {
+    return(list(
+      has_trends = FALSE,
+      message = "Insufficient years of data for trend analysis"
+    ))
+  }
+  
+  # Overall district trends
+  overall_trends <- data.frame()
+  for (year in years) {
+    year_data <- district_data[district_data[["YEAR"]] == year, ]
+    year_data <- year_data[!duplicated(year_data[["STUDENT_ID"]]), ]
+    
+    total <- nrow(year_data)
+    chronic <- sum(year_data[["CHRONIC_ABSENT"]])
+    rate <- chronic / total
+    
+    trend_row <- data.frame(
+      YEAR = year,
+      TOTAL_STUDENTS = total,
+      CHRONIC_ABSENT = chronic,
+      CHRONIC_RATE = rate,
+      stringsAsFactors = FALSE
+    )
+    overall_trends <- rbind(overall_trends, trend_row)
+  }
+  
+  # Calculate year-over-year changes
+  overall_trends$YOY_RATE_CHANGE <- c(NA, diff(overall_trends$CHRONIC_RATE))
+  overall_trends$YOY_COUNT_CHANGE <- c(NA, diff(overall_trends$CHRONIC_ABSENT))
+  
+  # Demographic group trends
+  demo_cols <- c("MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", 
+                 "ELL", "DISADVANTAGE", "DISABILITY")
+  demo_names <- c("male", "female", "hispanic", "white", "asian", "black", 
+                  "ell", "disadvantaged", "disability")
+  
+  demographic_trends <- list()
+  
+  for (i in seq_along(demo_cols)) {
+    col <- demo_cols[i]
+    name <- demo_names[i]
+    
+    group_trends <- data.frame()
+    
+    for (year in years) {
+      year_data <- district_data[district_data[["YEAR"]] == year, ]
+      year_data <- year_data[!duplicated(year_data[["STUDENT_ID"]]), ]
+      group_data <- year_data[year_data[[col]] == 1, ]
+      
+      if (nrow(group_data) > 0) {
+        total <- nrow(group_data)
+        chronic <- sum(group_data[["CHRONIC_ABSENT"]])
+        rate <- chronic / total
+        
+        group_row <- data.frame(
+          YEAR = year,
+          GROUP = name,
+          TOTAL_STUDENTS = total,
+          CHRONIC_ABSENT = chronic,
+          CHRONIC_RATE = rate,
+          stringsAsFactors = FALSE
+        )
+        group_trends <- rbind(group_trends, group_row)
+      }
+    }
+    
+    if (nrow(group_trends) > 1) {
+      group_trends$YOY_RATE_CHANGE <- c(NA, diff(group_trends$CHRONIC_RATE))
+      group_trends$YOY_COUNT_CHANGE <- c(NA, diff(group_trends$CHRONIC_ABSENT))
+      demographic_trends[[name]] <- group_trends
+    }
+  }
+  
+  # Most recent year-over-year changes
+  current_year <- max(years)
+  prev_year <- years[length(years) - 1]
+  
+  current_rate <- overall_trends$CHRONIC_RATE[overall_trends$YEAR == current_year]
+  prev_rate <- overall_trends$CHRONIC_RATE[overall_trends$YEAR == prev_year]
+  overall_yoy_change <- current_rate - prev_rate
+  
+  # Demographic group most recent changes
+  demo_yoy_changes <- data.frame()
+  for (name in names(demographic_trends)) {
+    group_data <- demographic_trends[[name]]
+    if (nrow(group_data) >= 2) {
+      latest_change <- tail(group_data$YOY_RATE_CHANGE, 1)
+      if (!is.na(latest_change)) {
+        demo_row <- data.frame(
+          GROUP = name,
+          YOY_RATE_CHANGE = latest_change,
+          stringsAsFactors = FALSE
+        )
+        demo_yoy_changes <- rbind(demo_yoy_changes, demo_row)
+      }
+    }
+  }
+  
+  result <- list(
+    has_trends = TRUE,
+    overall_trends = overall_trends,
+    demographic_trends = demographic_trends,
+    overall_yoy_change = overall_yoy_change,
+    demo_yoy_changes = demo_yoy_changes,
+    current_year = current_year,
+    prev_year = prev_year
   )
   
   return(result)
