@@ -57,10 +57,14 @@ render_district <- function(data_file, district_name) {
   safe_district_name <- gsub("[^A-Za-z0-9]", "_", district_name)
   output_file <- paste0(safe_district_name, "_report.html")
   
-  # Create temporary QMD file
+  # Create temporary files
   temp_qmd <- file.path(getwd(), "temp_district_report.qmd")
+  temp_rds <- file.path(getwd(), "temp_analysis_results.rds")
   
-  # Generate QMD content with county context section
+  # Save analysis results for QMD access
+  saveRDS(analysis_results, temp_rds)
+  
+  # Generate QMD content
   qmd_content <- c(
     "---",
     paste0("title: \"", district_name, " Chronic Absence Report\""),
@@ -75,6 +79,10 @@ render_district <- function(data_file, district_name) {
     "  warning: false",
     "  message: false",
     "---",
+    "",
+    "```{r setup, include=FALSE}",
+    "analysis_results <- readRDS('temp_analysis_results.rds')",
+    "```",
     "",
     "# Executive Summary",
     "",
@@ -192,7 +200,7 @@ render_district <- function(data_file, district_name) {
     qmd_content <- c(qmd_content, county_context_section)
   }
   
-  # Continue with remaining sections
+  # Add remaining sections
   remaining_sections <- c(
     "",
     "# School Analysis",
@@ -200,7 +208,6 @@ render_district <- function(data_file, district_name) {
     schools_text,
     "",
     "```{r school-table}",
-    "# Show top 5 schools by chronic absence count",
     "top_schools <- head(analysis_results$schools$school_summary, 5)",
     "school_data <- data.frame(",
     "  School = top_schools$SCHOOL_NAME,",
@@ -284,11 +291,16 @@ render_district <- function(data_file, district_name) {
   # Write QMD file
   writeLines(qmd_content, temp_qmd)
   
-  # Render report
-  system(sprintf('quarto render "%s" --output "%s"', temp_qmd, output_file))
+  # Render report and check for errors
+  render_result <- system(sprintf('quarto render "%s" --output "%s"', temp_qmd, output_file))
   
-  # Cleanup
+  # Cleanup temp files
   unlink(temp_qmd)
+  unlink(temp_rds)
+  
+  if (render_result != 0) {
+    stop("Report rendering failed. Check Quarto output for errors.")
+  }
   
   cat("District report saved to:", output_file, "\n")
   return(output_file)
