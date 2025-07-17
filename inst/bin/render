@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# bueller - Chronic Absence Analyzer CLI
+# render - Chronic Absence Analyzer CLI
 # POSIX-compliant command line interface
 
 # Parse command line arguments
