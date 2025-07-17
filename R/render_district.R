@@ -1,0 +1,184 @@
+#' Generate district chronic absence report
+#'
+#' @param data_file Path to student-level chronic absence data file
+#' @param district_name Name of district to analyze
+#' @importFrom utils read.csv
+#' @export
+render_district <- function(data_file, district_name) {
+  # Check data file exists
+  if (!file.exists(data_file)) {
+    stop("Data file not found: ", data_file)
+  }
+  
+  # Load data
+  if (grepl("\\.csv$", data_file, ignore.case = TRUE)) {
+    data <- read.csv(data_file, stringsAsFactors = FALSE)
+  } else if (grepl("\\.rds$", data_file, ignore.case = TRUE)) {
+    data <- readRDS(data_file)
+  } else {
+    stop("Unsupported file format. Use .csv or .rds files")
+  }
+  
+  # Validate data structure
+  required_cols <- c("STUDENT_ID", "YEAR", "SCHOOL_NAME", 
+                     "DISTRICT_NAME", "COUNTY_NAME", "CHRONIC_ABSENT")
+  missing_cols <- setdiff(required_cols, names(data))
+  if (length(missing_cols) > 0) {
+    stop("Missing required columns: ", 
+         paste(missing_cols, collapse = ", "))
+  }
+  
+  # Check if district exists
+  if (!district_name %in% data$DISTRICT_NAME) {
+    stop("District '", district_name, "' not found in data")
+  }
+  
+  # Run analysis
+  analysis_results <- analyze_district(data, district_name)
+  
+  # Generate text sections
+  executive_text <- text_executive(analysis_results)
+  overview_text <- text_overview(analysis_results)
+  metrics_text <- text_metrics(analysis_results)
+  schools_text <- text_schools(analysis_results)
+  demographics_text <- text_demographics(analysis_results)
+  grades_text <- text_grades(analysis_results)
+  benchmarks_text <- text_benchmarks(analysis_results)
+  
+  # Create output filename
+  safe_district_name <- gsub("[^A-Za-z0-9]", "_", district_name)
+  output_file <- paste0(safe_district_name, "_report.html")
+  
+  # Create temporary QMD file
+  temp_qmd <- tempfile(fileext = ".qmd")
+  
+  # Generate QMD content
+  qmd_content <- c(
+    "---",
+    paste0("title: \"", district_name, " Chronic Absence Report\""),
+    "format:",
+    "  html:",
+    "    toc: true",
+    "    embed-resources: true",
+    "    theme: minty",
+    "date: today",
+    "execute:",
+    "  echo: false",
+    "  warning: false",
+    "  message: false",
+    "---",
+    "",
+    "# Executive Summary",
+    "",
+    executive_text,
+    "",
+    "# District Overview",
+    "",
+    overview_text,
+    "",
+    "# District Metrics",
+    "",
+    metrics_text,
+    "",
+    "# School Analysis",
+    "",
+    schools_text,
+    "",
+    "```{r school-table}",
+    "school_data <- data.frame(",
+    "  School = c(" ,
+    paste0("    \"", analysis_results$schools$school_summary$SCHOOL_NAME, "\"", collapse = ",\n"),
+    "  ),",
+    "  Students = c(",
+    paste0("    ", analysis_results$schools$school_summary$TOTAL_STUDENTS, collapse = ",\n"),
+    "  ),",
+    "  Chronic_Absent = c(",
+    paste0("    ", analysis_results$schools$school_summary$CHRONIC_ABSENT, collapse = ",\n"),
+    "  ),",
+    "  Rate = c(",
+    paste0("    ", round(analysis_results$schools$school_summary$CHRONIC_RATE, 3), collapse = ",\n"),
+    "  )",
+    ")",
+    "school_data$Students <- format(school_data$Students, big.mark = ',')",
+    "school_data$Chronic_Absent <- format(school_data$Chronic_Absent, big.mark = ',')",
+    "school_data$Rate <- paste0(round(school_data$Rate * 100, 1), '%')",
+    "knitr::kable(school_data,",
+    "             col.names = c('School', 'Total Students', 'Chronic Absent', 'Rate'),",
+    "             caption = 'School-Level Chronic Absence Summary')",
+    "```",
+    "",
+    "# Demographic Analysis",
+    "",
+    demographics_text,
+    "",
+    "```{r demographic-table}",
+    "demo_data <- data.frame(",
+    "  Group = c(",
+    paste0("    \"", analysis_results$demographics$demographic_summary$GROUP, "\"", collapse = ",\n"),
+    "  ),",
+    "  Students = c(",
+    paste0("    ", analysis_results$demographics$demographic_summary$TOTAL_STUDENTS, collapse = ",\n"),
+    "  ),",
+    "  Chronic_Absent = c(",
+    paste0("    ", analysis_results$demographics$demographic_summary$CHRONIC_ABSENT, collapse = ",\n"),
+    "  ),",
+    "  Rate = c(",
+    paste0("    ", round(analysis_results$demographics$demographic_summary$CHRONIC_RATE, 3), collapse = ",\n"),
+    "  ),",
+    "  Gap = c(",
+    paste0("    ", round(analysis_results$demographics$demographic_summary$GAP_FROM_DISTRICT, 3), collapse = ",\n"),
+    "  )",
+    ")",
+    "demo_data$Students <- format(demo_data$Students, big.mark = ',')",
+    "demo_data$Chronic_Absent <- format(demo_data$Chronic_Absent, big.mark = ',')",
+    "demo_data$Rate <- paste0(round(demo_data$Rate * 100, 1), '%')",
+    "demo_data$Gap <- paste0(ifelse(demo_data$Gap >= 0, '+', ''), round(demo_data$Gap * 100, 1), 'pp')",
+    "knitr::kable(demo_data,",
+    "             col.names = c('Group', 'Students', 'Chronic Absent', 'Rate', 'Gap'),",
+    "             caption = 'Demographic Group Chronic Absence Summary')",
+    "```",
+    "",
+    "# Grade-Level Patterns",
+    "",
+    grades_text,
+    "",
+    "```{r grade-table}",
+    "grade_data <- data.frame(",
+    "  Grade = c(",
+    paste0("    ", analysis_results$grades$grade_summary$GRADE, collapse = ",\n"),
+    "  ),",
+    "  Students = c(",
+    paste0("    ", analysis_results$grades$grade_summary$TOTAL_STUDENTS, collapse = ",\n"),
+    "  ),",
+    "  Chronic_Absent = c(",
+    paste0("    ", analysis_results$grades$grade_summary$CHRONIC_ABSENT, collapse = ",\n"),
+    "  ),",
+    "  Rate = c(",
+    paste0("    ", round(analysis_results$grades$grade_summary$CHRONIC_RATE, 3), collapse = ",\n"),
+    "  )",
+    ")",
+    "grade_data$Students <- format(grade_data$Students, big.mark = ',')",
+    "grade_data$Chronic_Absent <- format(grade_data$Chronic_Absent, big.mark = ',')",
+    "grade_data$Rate <- paste0(round(grade_data$Rate * 100, 1), '%')",
+    "knitr::kable(grade_data,",
+    "             col.names = c('Grade', 'Students', 'Chronic Absent', 'Rate'),",
+    "             caption = 'Grade-Level Chronic Absence Summary')",
+    "```",
+    "",
+    "# Benchmark Comparisons",
+    "",
+    benchmarks_text
+  )
+  
+  # Write QMD file
+  writeLines(qmd_content, temp_qmd)
+  
+  # Render report
+  system(sprintf('quarto render "%s" --output "%s"', temp_qmd, output_file))
+  
+  # Cleanup
+  unlink(temp_qmd)
+  
+  cat("District report saved to:", output_file, "\n")
+  return(output_file)
+}
