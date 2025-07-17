@@ -11,18 +11,18 @@ text_trends <- function(analysis_results) {
     return(trends[["message"]])
   }
   
-  district_name <- analysis_results[["district_name"]]
-  years_analyzed <- trends[["years_analyzed"]]
-  num_years <- trends[["num_years"]]
-  total_change <- trends[["total_change"]]
-  avg_annual_change <- trends[["avg_annual_change"]]
   overall_trends <- trends[["overall_trends"]]
+  years <- overall_trends[["YEAR"]]
+  num_years <- length(years)
   
   # Overall trend summary
-  first_year <- min(years_analyzed)
-  last_year <- max(years_analyzed)
+  first_year <- min(years)
+  last_year <- max(years)
   first_rate <- overall_trends$CHRONIC_RATE[1]
   last_rate <- overall_trends$CHRONIC_RATE[nrow(overall_trends)]
+  
+  total_change <- last_rate - first_rate
+  avg_annual_change <- total_change / (num_years - 1)
   
   total_change_pct <- paste0(ifelse(total_change >= 0, "+", ""), round(total_change * 100, 1), " percentage points")
   avg_change_pct <- paste0(ifelse(avg_annual_change >= 0, "+", ""), round(avg_annual_change * 100, 1), " percentage points per year")
@@ -50,36 +50,40 @@ text_trends <- function(analysis_results) {
   }
   
   # Year-to-year volatility
-  yoy_changes <- overall_trends$YOY_RATE_CHANGE[!is.na(overall_trends$YOY_RATE_CHANGE)]
-  volatility <- sd(yoy_changes, na.rm = TRUE)
+  yoy_changes <- overall_trends$RATE_CHANGE[!is.na(overall_trends$RATE_CHANGE)]
   
-  largest_increase_year <- trends[["largest_increase_year"]]
-  largest_increase_amount <- trends[["largest_increase_amount"]]
-  largest_decrease_year <- trends[["largest_decrease_year"]]
-  largest_decrease_amount <- trends[["largest_decrease_amount"]]
-  
-  if (!is.na(largest_increase_amount) && largest_increase_amount > 0.01) {
-    increase_text <- paste0(
-      "The largest single-year increase occurred in ", largest_increase_year, 
-      " (+", round(largest_increase_amount * 100, 1), " percentage points)."
-    )
+  if (length(yoy_changes) > 0) {
+    largest_increase_idx <- which.max(overall_trends$RATE_CHANGE)
+    largest_decrease_idx <- which.min(overall_trends$RATE_CHANGE)
+    
+    largest_increase_year <- overall_trends$YEAR[largest_increase_idx]
+    largest_increase_amount <- overall_trends$RATE_CHANGE[largest_increase_idx]
+    largest_decrease_year <- overall_trends$YEAR[largest_decrease_idx]
+    largest_decrease_amount <- overall_trends$RATE_CHANGE[largest_decrease_idx]
+    
+    if (!is.na(largest_increase_amount) && largest_increase_amount > 0.01) {
+      increase_text <- paste0(
+        " The largest single-year increase occurred in ", largest_increase_year, 
+        " (+", round(largest_increase_amount * 100, 1), " percentage points)."
+      )
+    } else {
+      increase_text <- ""
+    }
+    
+    if (!is.na(largest_decrease_amount) && largest_decrease_amount < -0.01) {
+      decrease_text <- paste0(
+        " The largest single-year decrease occurred in ", largest_decrease_year, 
+        " (", round(largest_decrease_amount * 100, 1), " percentage points)."
+      )
+    } else {
+      decrease_text <- ""
+    }
   } else {
     increase_text <- ""
-  }
-  
-  if (!is.na(largest_decrease_amount) && largest_decrease_amount < -0.01) {
-    decrease_text <- paste0(
-      "The largest single-year decrease occurred in ", largest_decrease_year, 
-      " (", round(largest_decrease_amount * 100, 1), " percentage points)."
-    )
-  } else {
     decrease_text <- ""
   }
   
-  volatility_parts <- c(increase_text, decrease_text)
-  volatility_text <- paste(volatility_parts[nchar(volatility_parts) > 0], collapse = " ")
-  
-  trends_text <- paste0(overall_text, " ", volatility_text)
+  trends_text <- paste0(overall_text, increase_text, decrease_text)
   
   return(trends_text)
 }
