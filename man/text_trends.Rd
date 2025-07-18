@@ -2,7 +2,7 @@
 % Please edit documentation in R/text_trends.R
 \name{text_trends}
 \alias{text_trends}
-\title{Generate trends analysis text}
+\title{Generate comprehensive trends analysis text with subgroups (300+ words)}
 \usage{
 text_trends(analysis_results)
 }
@@ -13,6 +13,6 @@ text_trends(analysis_results)
 Character string with trends analysis text
 }
 \description{
-Generate trends analysis text
+Generate comprehensive trends analysis text with subgroups (300+ words)
 }
 \keyword{internal}

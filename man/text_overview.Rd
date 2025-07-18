@@ -2,7 +2,7 @@
 % Please edit documentation in R/text_overview.R
 \name{text_overview}
 \alias{text_overview}
-\title{Generate district overview text}
+\title{Generate comprehensive district overview text with trends (300+ words)}
 \usage{
 text_overview(analysis_results)
 }
@@ -13,6 +13,6 @@ text_overview(analysis_results)
 Character string with district overview text
 }
 \description{
-Generate district overview text
+Generate comprehensive district overview text with trends (300+ words)
 }
 \keyword{internal}

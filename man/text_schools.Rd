@@ -2,7 +2,7 @@
 % Please edit documentation in R/text_schools.R
 \name{text_schools}
 \alias{text_schools}
-\title{Generate school analysis text}
+\title{Generate comprehensive school analysis text (100+ words longer)}
 \usage{
 text_schools(analysis_results)
 }
@@ -13,6 +13,6 @@ text_schools(analysis_results)
 Character string with school analysis text
 }
 \description{
-Generate school analysis text
+Generate comprehensive school analysis text (100+ words longer)
 }
 \keyword{internal}

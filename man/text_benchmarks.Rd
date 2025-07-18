@@ -2,7 +2,7 @@
 % Please edit documentation in R/text_benchmarks.R
 \name{text_benchmarks}
 \alias{text_benchmarks}
-\title{Generate benchmark analysis text}
+\title{Generate comprehensive benchmark analysis text (100+ words longer)}
 \usage{
 text_benchmarks(analysis_results)
 }
@@ -13,6 +13,6 @@ text_benchmarks(analysis_results)
 Character string with benchmark analysis text
 }
 \description{
-Generate benchmark analysis text
+Generate comprehensive benchmark analysis text (100+ words longer)
 }
 \keyword{internal}

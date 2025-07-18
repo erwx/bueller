@@ -37,7 +37,6 @@ render_district <- function(data_file, district_name) {
   analysis_results <- analyze_district(data, district_name)
   
   # Generate text sections
-  executive_text <- text_executive(analysis_results)
   overview_text <- text_overview(analysis_results)
   metrics_text <- text_metrics(analysis_results)
   trends_text <- text_trends(analysis_results)
@@ -84,10 +83,6 @@ render_district <- function(data_file, district_name) {
     "analysis_results <- readRDS('temp_analysis_results.rds')",
     "```",
     "",
-    "# Executive Summary",
-    "",
-    executive_text,
-    "",
     "# District Overview",
     "",
     overview_text,
@@ -112,6 +107,26 @@ render_district <- function(data_file, district_name) {
     "knitr::kable(overview_data,",
     "             col.names = c('Metric', 'Value'),",
     "             caption = 'District Overview Summary')",
+    "```",
+    "",
+    "## Year-over-Year Trends",
+    "",
+    trends_text,
+    "",
+    "```{r trends-table}",
+    "if (analysis_results$trends$has_trends) {",
+    "  # Overall year-to-year trends table",
+    "  trends_overall <- analysis_results$trends$overall_trends",
+    "  trends_overall$CHRONIC_RATE <- paste0(round(trends_overall$CHRONIC_RATE * 100, 1), '%')",
+    "  trends_overall$RATE_CHANGE <- ifelse(is.na(trends_overall$RATE_CHANGE), '-',",
+    "    paste0(ifelse(trends_overall$RATE_CHANGE >= 0, '+', ''), round(trends_overall$RATE_CHANGE * 100, 1), 'pp'))",
+    "  ",
+    "  knitr::kable(trends_overall[, c('YEAR', 'TOTAL_STUDENTS', 'CHRONIC_ABSENT', 'CHRONIC_RATE', 'RATE_CHANGE')],",
+    "               col.names = c('Year', 'Total Students', 'Chronic Absent', 'Rate', 'Year-over-Year Change'),",
+    "               caption = 'District Chronic Absence Trends by Year')",
+    "} else {",
+    "  cat('Trend data not available.')",
+    "}",
     "```",
     "",
     "# District Metrics",
@@ -140,26 +155,6 @@ render_district <- function(data_file, district_name) {
     "knitr::kable(metrics_data,",
     "             col.names = c('Metric', 'Value'),",
     "             caption = 'District Performance Metrics')",
-    "```",
-    "",
-    "## Year-over-Year Trends",
-    "",
-    trends_text,
-    "",
-    "```{r trends-table}",
-    "if (analysis_results$trends$has_trends) {",
-    "  # Overall year-to-year trends table",
-    "  trends_overall <- analysis_results$trends$overall_trends",
-    "  trends_overall$CHRONIC_RATE <- paste0(round(trends_overall$CHRONIC_RATE * 100, 1), '%')",
-    "  trends_overall$RATE_CHANGE <- ifelse(is.na(trends_overall$RATE_CHANGE), '-',",
-    "    paste0(ifelse(trends_overall$RATE_CHANGE >= 0, '+', ''), round(trends_overall$RATE_CHANGE * 100, 1), 'pp'))",
-    "  ",
-    "  knitr::kable(trends_overall[, c('YEAR', 'TOTAL_STUDENTS', 'CHRONIC_ABSENT', 'CHRONIC_RATE', 'RATE_CHANGE')],",
-    "               col.names = c('Year', 'Total Students', 'Chronic Absent', 'Rate', 'Year-over-Year Change'),",
-    "               caption = 'District Chronic Absence Trends by Year')",
-    "} else {",
-    "  cat('Trend data not available.')",
-    "}",
     "```"
   )
   
