@@ -1,0 +1,143 @@
+# School-Level Patterns
+
+## Distribution of Chronic Absence Rates
+
+```{r school-distribution-calcs, echo=FALSE}
+# Get current year school data
+school_current <- params$school_data %>% 
+  filter(YEAR == current_year, SUBGROUP == "ALL") %>%
+  arrange(CHRONIC_RATE)
+
+n_schools_total <- nrow(school_current)
+lowest_school_rate <- round(min(school_current$CHRONIC_RATE) * 100, 1)
+highest_school_rate <- round(max(school_current$CHRONIC_RATE) * 100, 1)
+rate_range <- highest_school_rate - lowest_school_rate
+median_school_rate <- round(median(school_current$CHRONIC_RATE) * 100, 1)
+mean_school_rate <- round(mean(school_current$CHRONIC_RATE) * 100, 1)
+
+# Quartile calculations
+q1_rate <- round(quantile(school_current$CHRONIC_RATE, 0.25) * 100, 1)
+q3_rate <- round(quantile(school_current$CHRONIC_RATE, 0.75) * 100, 1)
+iqr_range <- q3_rate - q1_rate
+
+# Schools in different performance bands
+schools_below_10 <- sum(school_current$CHRONIC_RATE < 0.10)
+schools_10_to_20 <- sum(school_current$CHRONIC_RATE >= 0.10 & school_current$CHRONIC_RATE < 0.20)
+schools_20_to_30 <- sum(school_current$CHRONIC_RATE >= 0.20 & school_current$CHRONIC_RATE < 0.30)
+schools_above_30 <- sum(school_current$CHRONIC_RATE >= 0.30)
+
+# Standard deviation calculation
+school_rate_sd <- round(sd(school_current$CHRONIC_RATE) * 100, 2)
+
+# Get school names for extremes
+lowest_school_name <- school_current$SCHOOL_NAME[1]
+highest_school_name <- school_current$SCHOOL_NAME[nrow(school_current)]
+
+# Average enrollment per school
+avg_enrollment_per_school <- round(mean(school_current$ENROLLMENT), 0)
+total_district_enrollment <- sum(school_current$ENROLLMENT)
+total_district_chronic <- sum(school_current$CHRONIC_COUNT)
+
+# Schools above and below district average
+district_avg_rate <- round(mean(params$district_data %>% filter(YEAR == current_year, SUBGROUP == "ALL") %>% pull(CHRONIC_RATE)) * 100, 1)
+schools_above_district_avg <- sum(school_current$CHRONIC_RATE * 100 > district_avg_rate)
+schools_below_district_avg <- sum(school_current$CHRONIC_RATE * 100 < district_avg_rate)
+schools_at_district_avg <- sum(round(school_current$CHRONIC_RATE * 100, 1) == district_avg_rate)
+```
+
+Chronic absence rates in `r current_year` ranged from `r lowest_school_rate`% at `r lowest_school_name` to `r highest_school_rate`% at `r highest_school_name`.
+This represents a range of `r rate_range` percentage points across the district's `r n_schools_total` schools.
+The median school chronic absence rate was `r median_school_rate`% while the mean rate was `r mean_school_rate`%.
+The standard deviation of school rates was `r school_rate_sd` percentage points.
+
+The first quartile of schools had chronic absence rates at or below `r q1_rate`%.
+The third quartile threshold was `r q3_rate`%.
+The interquartile range spanned `r iqr_range` percentage points.
+Half of all schools had chronic absence rates between these quartile boundaries.
+
+Schools were distributed across performance levels as follows: `r schools_below_10` schools had rates below 10%, `r schools_10_to_20` schools had rates between 10% and 20%, `r schools_20_to_30` schools had rates between 20% and 30%, and `r schools_above_30` schools had rates above 30%.
+The district average chronic absence rate was `r district_avg_rate`%.
+`r schools_above_district_avg` schools exceeded this average while `r schools_below_district_avg` schools fell below the average.
+`r if(schools_at_district_avg > 0) paste(schools_at_district_avg, "schools matched the district average exactly.") else "No schools matched the district average exactly."`
+
+Schools enrolled an average of `r avg_enrollment_per_school` students each.
+The total district enrollment of `r total_district_enrollment` students included `r total_district_chronic` chronically absent students.
+Individual school enrollment ranged from `r min(school_current$ENROLLMENT)` to `r max(school_current$ENROLLMENT)` students.
+The largest schools served `r round(max(school_current$ENROLLMENT) / min(school_current$ENROLLMENT), 1)` times as many students as the smallest schools.
+
+### School Rate Standard Deviations by Subgroup (Percentage Points)
+
+```{r school-variance-table, echo=FALSE}
+# Create school variance table with years as columns - SD only
+school_variance <- params$district_data %>%
+  filter(!is.na(SCHOOL_RATE_SD)) %>%
+  select(YEAR, SUBGROUP, SCHOOL_RATE_SD) %>%
+  mutate(SD = round(SCHOOL_RATE_SD * 100, 2)) %>%
+  select(YEAR, SUBGROUP, SD) %>%
+  arrange(match(SUBGROUP, c("ALL", "MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", "ELL", "DISADVANTAGE", "DISABILITY")), YEAR) %>%
+  tidyr::pivot_wider(names_from = YEAR, values_from = SD)
+
+kable(school_variance,
+      caption = "Standard deviation of school chronic absence rates by subgroup across years.",
+      align = c("l", rep("r", ncol(school_variance)-1)))
+```
+
+## School-by-School Breakdown
+
+```{r school-breakdown-calcs, echo=FALSE}
+# Get top 10 schools by chronic absence count in current year
+top_chronic_schools <- params$school_data %>%
+  filter(YEAR == current_year, SUBGROUP == "ALL") %>%
+  arrange(desc(CHRONIC_COUNT)) %>%
+  slice(1:10)
+
+top_school_names <- paste(top_chronic_schools$SCHOOL_NAME, collapse = ", ")
+top_school_chronic_counts <- top_chronic_schools$CHRONIC_COUNT
+top_school_rates <- round(top_chronic_schools$CHRONIC_RATE * 100, 1)
+top_school_enrollments <- top_chronic_schools$ENROLLMENT
+
+# School with most chronic absence
+highest_count_school <- top_chronic_schools$SCHOOL_NAME[1]
+highest_count_value <- top_chronic_schools$CHRONIC_COUNT[1]
+highest_count_rate <- round(top_chronic_schools$CHRONIC_RATE[1] * 100, 1)
+highest_count_enrollment <- top_chronic_schools$ENROLLMENT[1]
+
+# Calculate what proportion of district chronic absence comes from top schools
+top_5_chronic_total <- sum(top_chronic_schools$CHRONIC_COUNT[1:5])
+district_chronic_total <- sum(params$school_data %>% filter(YEAR == current_year, SUBGROUP == "ALL") %>% pull(CHRONIC_COUNT))
+top_5_proportion <- round((top_5_chronic_total / district_chronic_total) * 100, 1)
+
+top_10_chronic_total <- sum(top_chronic_schools$CHRONIC_COUNT)
+top_10_proportion <- round((top_10_chronic_total / district_chronic_total) * 100, 1)
+
+# Range of chronic counts in top 10
+min_top_10_count <- min(top_chronic_schools$CHRONIC_COUNT)
+max_top_10_count <- max(top_chronic_schools$CHRONIC_COUNT)
+```
+
+The school with the highest number of chronically absent students was `r highest_count_school` with `r highest_count_value` chronically absent students out of `r highest_count_enrollment` enrolled.
+This represents a chronic absence rate of `r highest_count_rate`% at this school.
+The top 10 schools by chronic absence count accounted for `r top_10_chronic_total` chronically absent students, representing `r top_10_proportion`% of all district chronic absence.
+The top 5 schools alone accounted for `r top_5_chronic_total` chronically absent students, or `r top_5_proportion`% of the district total.
+
+Among the top 10 schools by chronic absence count, the number of chronically absent students ranged from `r min_top_10_count` to `r max_top_10_count`.
+These schools had enrollments ranging from `r min(top_chronic_schools$ENROLLMENT)` to `r max(top_chronic_schools$ENROLLMENT)` students.
+Chronic absence rates at these schools ranged from `r min(top_school_rates)`% to `r max(top_school_rates)`%.
+The average chronic absence rate among these 10 schools was `r round(mean(top_school_rates), 1)`%.
+
+### Top 5 School Rankings Within District
+
+```{r school-rankings-table, echo=FALSE}
+# Create school rankings table - top 5 schools by chronic absence rate
+school_rankings <- params$school_data %>%
+  filter(YEAR == current_year, SUBGROUP == "ALL") %>%
+  arrange(desc(CHRONIC_RATE)) %>%
+  slice(1:5) %>%
+  select(SCHOOL_NAME, ENROLLMENT, CHRONIC_COUNT, CHRONIC_RATE) %>%
+  mutate(CHRONIC_RATE = round(CHRONIC_RATE * 100, 1))
+
+kable(school_rankings,
+      col.names = c("School Name", "Enrollment", "Chronic Count", "Rate (%)"),
+      caption = "Top 5 schools by chronic absence rate within the district.",
+      align = c("l", "r", "r", "r"))
+```

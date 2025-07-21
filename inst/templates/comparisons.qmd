@@ -1,0 +1,252 @@
+# State and Peer Comparisons
+
+## State Average Comparisons
+
+```{r state-comparison-calcs, echo=FALSE}
+# Get state comparison data for current year
+state_current <- params$district_data %>% 
+  filter(YEAR == current_year, !is.na(STATE_RATE)) %>%
+  mutate(
+    GAP_FROM_STATE_PP = round(GAP_FROM_STATE * 100, 1),
+    DISTRICT_RATE_PP = round(CHRONIC_RATE * 100, 1),
+    STATE_RATE_PP = round(STATE_RATE * 100, 1)
+  )
+
+overall_gap <- state_current %>% filter(SUBGROUP == "ALL") %>% pull(GAP_FROM_STATE_PP)
+district_overall_rate <- state_current %>% filter(SUBGROUP == "ALL") %>% pull(DISTRICT_RATE_PP)
+state_overall_rate <- state_current %>% filter(SUBGROUP == "ALL") %>% pull(STATE_RATE_PP)
+
+# Find subgroups with largest positive and negative gaps
+subgroup_gaps <- state_current %>% 
+  filter(SUBGROUP != "ALL") %>%
+  arrange(desc(GAP_FROM_STATE_PP))
+
+largest_positive_gap_subgroup <- subgroup_gaps$SUBGROUP[1]
+largest_positive_gap <- subgroup_gaps$GAP_FROM_STATE_PP[1]
+largest_negative_gap_subgroup <- subgroup_gaps$SUBGROUP[nrow(subgroup_gaps)]
+largest_negative_gap <- subgroup_gaps$GAP_FROM_STATE_PP[nrow(subgroup_gaps)]
+
+gap_range <- max(subgroup_gaps$GAP_FROM_STATE_PP) - min(subgroup_gaps$GAP_FROM_STATE_PP)
+
+# Calculate additional metrics for expanded analysis
+male_gap <- state_current %>% filter(SUBGROUP == "MALE") %>% pull(GAP_FROM_STATE_PP)
+female_gap <- state_current %>% filter(SUBGROUP == "FEMALE") %>% pull(GAP_FROM_STATE_PP)
+hispanic_gap <- state_current %>% filter(SUBGROUP == "HISPANIC") %>% pull(GAP_FROM_STATE_PP)
+white_gap <- state_current %>% filter(SUBGROUP == "WHITE") %>% pull(GAP_FROM_STATE_PP)
+ell_gap <- state_current %>% filter(SUBGROUP == "ELL") %>% pull(GAP_FROM_STATE_PP)
+disadvantaged_gap <- state_current %>% filter(SUBGROUP == "DISADVANTAGE") %>% pull(GAP_FROM_STATE_PP)
+
+male_district_rate <- state_current %>% filter(SUBGROUP == "MALE") %>% pull(DISTRICT_RATE_PP)
+male_state_rate <- state_current %>% filter(SUBGROUP == "MALE") %>% pull(STATE_RATE_PP)
+female_district_rate <- state_current %>% filter(SUBGROUP == "FEMALE") %>% pull(DISTRICT_RATE_PP)
+female_state_rate <- state_current %>% filter(SUBGROUP == "FEMALE") %>% pull(STATE_RATE_PP)
+
+# Count subgroups above and below state average
+subgroups_above_state <- sum(subgroup_gaps$GAP_FROM_STATE_PP > 0)
+subgroups_below_state <- sum(subgroup_gaps$GAP_FROM_STATE_PP < 0)
+subgroups_equal_state <- sum(subgroup_gaps$GAP_FROM_STATE_PP == 0)
+```
+
+In `r current_year`, `r params$district_name` had an overall chronic absence rate of `r district_overall_rate`% compared to the state average of `r state_overall_rate`%.
+This represents a gap of `r abs(overall_gap)` percentage points `r ifelse(overall_gap > 0, "above", "below")` the state average.
+
+```{r state-gap-details, echo=FALSE, results='asis'}
+if (overall_gap > 0) {
+  cat("The district's chronic absence rate exceeded the state average.")
+} else if (overall_gap < 0) {
+  cat("The district's chronic absence rate was below the state average.")
+} else {
+  cat("The district's chronic absence rate matched the state average.")
+}
+```
+
+Male students in the district had a chronic absence rate of `r male_district_rate`% compared to the state average of `r male_state_rate`% for male students.
+This represents a gap of `r abs(male_gap)` percentage points `r ifelse(male_gap > 0, "above", "below")` the state average for this subgroup.
+Female students had a rate of `r female_district_rate`% compared to the state average of `r female_state_rate`% for female students.
+The gap for female students was `r abs(female_gap)` percentage points `r ifelse(female_gap > 0, "above", "below")` the state average.
+
+Among demographic subgroups, `r largest_positive_gap_subgroup` students had the largest gap above the state average at `r largest_positive_gap` percentage points.
+`r largest_negative_gap_subgroup` students had the gap furthest below the state average at `r largest_negative_gap` percentage points.
+The range of gaps across subgroups spanned `r round(gap_range, 1)` percentage points.
+Of the demographic subgroups analyzed, `r subgroups_above_state` had chronic absence rates above the state average for their subgroup.
+`r subgroups_below_state` subgroups had rates below the state average.
+`r if(subgroups_equal_state > 0) paste(subgroups_equal_state, "subgroups matched the state average exactly.") else "No subgroups matched the state average exactly."`
+
+### District vs State Average Gap (Percentage Points)
+
+```{r state-gaps-table, echo=FALSE}
+# Gaps table - District rate minus state average
+state_gaps <- params$district_data %>%
+  filter(!is.na(STATE_RATE)) %>%
+  select(YEAR, SUBGROUP, GAP_FROM_STATE) %>%
+  mutate(GAP = round(GAP_FROM_STATE * 100, 1)) %>%
+  select(YEAR, SUBGROUP, GAP) %>%
+  arrange(match(SUBGROUP, c("ALL", "MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", "ELL", "DISADVANTAGE", "DISABILITY")), YEAR) %>%
+  tidyr::pivot_wider(names_from = YEAR, values_from = GAP)
+
+kable(state_gaps, 
+      caption = "Positive values indicate district chronic absence rate exceeds state average. Negative values indicate district rate is below state average.",
+      align = c("l", rep("r", ncol(state_gaps)-1)))
+```
+
+## District Rankings
+
+```{r ranking-calcs, echo=FALSE}
+# Get ranking data for current year
+ranking_current <- params$district_data %>%
+  filter(YEAR == current_year, !is.na(DISTRICT_RANK)) %>%
+  arrange(match(SUBGROUP, c("ALL", "MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", "ELL", "DISADVANTAGE", "DISABILITY")))
+
+overall_rank <- ranking_current %>% filter(SUBGROUP == "ALL") %>% pull(DISTRICT_RANK)
+total_districts <- ranking_current %>% filter(SUBGROUP == "ALL") %>% pull(TOTAL_DISTRICTS)
+overall_percentile <- ranking_current %>% filter(SUBGROUP == "ALL") %>% pull(DISTRICT_PERCENTILE)
+
+best_ranking_subgroup <- ranking_current %>% filter(SUBGROUP != "ALL") %>% arrange(DISTRICT_RANK) %>% slice(1)
+worst_ranking_subgroup <- ranking_current %>% filter(SUBGROUP != "ALL") %>% arrange(desc(DISTRICT_RANK)) %>% slice(1)
+
+best_rank <- best_ranking_subgroup$DISTRICT_RANK
+best_percentile <- best_ranking_subgroup$DISTRICT_PERCENTILE
+worst_rank <- worst_ranking_subgroup$DISTRICT_RANK
+worst_percentile <- worst_ranking_subgroup$DISTRICT_PERCENTILE
+
+# Get additional ranking metrics
+male_rank <- ranking_current %>% filter(SUBGROUP == "MALE") %>% pull(DISTRICT_RANK)
+male_percentile <- ranking_current %>% filter(SUBGROUP == "MALE") %>% pull(DISTRICT_PERCENTILE)
+female_rank <- ranking_current %>% filter(SUBGROUP == "FEMALE") %>% pull(DISTRICT_RANK)
+female_percentile <- ranking_current %>% filter(SUBGROUP == "FEMALE") %>% pull(DISTRICT_PERCENTILE)
+
+hispanic_rank <- ranking_current %>% filter(SUBGROUP == "HISPANIC") %>% pull(DISTRICT_RANK)
+hispanic_percentile <- ranking_current %>% filter(SUBGROUP == "HISPANIC") %>% pull(DISTRICT_PERCENTILE)
+white_rank <- ranking_current %>% filter(SUBGROUP == "WHITE") %>% pull(DISTRICT_RANK)
+white_percentile <- ranking_current %>% filter(SUBGROUP == "WHITE") %>% pull(DISTRICT_PERCENTILE)
+
+# Calculate districts with better/worse performance
+districts_better <- overall_rank - 1
+districts_worse <- total_districts - overall_rank
+
+# Calculate ranking spread
+ranking_spread <- worst_rank - best_rank
+median_rank <- round(median(ranking_current %>% filter(SUBGROUP != "ALL") %>% pull(DISTRICT_RANK)), 0)
+```
+
+Among `r total_districts` districts statewide, `r params$district_name` ranked `r overall_rank` for overall chronic absence rate in `r current_year`.
+This places the district at the `r overall_percentile`th percentile.
+A ranking of `r overall_rank` means `r districts_better` districts had lower chronic absence rates.
+`r districts_worse` districts had higher chronic absence rates than `r params$district_name`.
+
+Male students in the district ranked `r male_rank` statewide, placing them at the `r male_percentile`th percentile among districts.
+Female students ranked `r female_rank` statewide at the `r female_percentile`th percentile.
+Hispanic students ranked `r hispanic_rank` with a percentile of `r hispanic_percentile`.
+White students ranked `r white_rank` at the `r white_percentile`th percentile.
+
+The district's best ranking among subgroups was for `r best_ranking_subgroup$SUBGROUP` students at rank `r best_rank` (percentile `r best_percentile`).
+The district's highest ranking was for `r worst_ranking_subgroup$SUBGROUP` students at rank `r worst_rank` (percentile `r worst_percentile`).
+Rankings ranged from `r best_rank` to `r worst_rank` across demographic subgroups.
+This represents a spread of `r ranking_spread` positions between the best and worst performing subgroups.
+The median ranking across all demographic subgroups was `r median_rank`.
+
+### District Percentiles by Subgroup
+
+```{r percentiles-table, echo=FALSE}
+# Create percentiles table with years as columns
+percentiles_wide <- params$district_data %>%
+  filter(!is.na(DISTRICT_PERCENTILE)) %>%
+  select(YEAR, SUBGROUP, DISTRICT_PERCENTILE) %>%
+  arrange(match(SUBGROUP, c("ALL", "MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", "ELL", "DISADVANTAGE", "DISABILITY")), YEAR) %>%
+  tidyr::pivot_wider(names_from = YEAR, values_from = DISTRICT_PERCENTILE)
+
+kable(percentiles_wide, 
+      caption = "Lower percentiles indicate better chronic absence performance relative to all districts statewide.",
+      align = c("l", rep("r", ncol(percentiles_wide)-1)))
+```
+
+## Peer District Comparisons
+
+```{r peer-comparison-calcs, echo=FALSE}
+# Get peer comparison data for current year
+peer_current <- params$district_data %>%
+  filter(YEAR == current_year, !is.na(PEER_RATE)) %>%
+  mutate(
+    GAP_FROM_PEERS_PP = round(GAP_FROM_PEERS * 100, 1),
+    DISTRICT_RATE_PP = round(CHRONIC_RATE * 100, 1),
+    PEER_RATE_PP = round(PEER_RATE * 100, 1)
+  )
+
+peer_size_band <- peer_current %>% filter(SUBGROUP == "ALL") %>% pull(PEER_SIZE_BAND)
+peer_overall_gap <- peer_current %>% filter(SUBGROUP == "ALL") %>% pull(GAP_FROM_PEERS_PP)
+district_peer_rate <- peer_current %>% filter(SUBGROUP == "ALL") %>% pull(DISTRICT_RATE_PP)
+peer_average_rate <- peer_current %>% filter(SUBGROUP == "ALL") %>% pull(PEER_RATE_PP)
+
+# Find subgroups with largest positive and negative peer gaps
+peer_subgroup_gaps <- peer_current %>%
+  filter(SUBGROUP != "ALL") %>%
+  arrange(desc(GAP_FROM_PEERS_PP))
+
+largest_positive_peer_gap_subgroup <- peer_subgroup_gaps$SUBGROUP[1]
+largest_positive_peer_gap <- peer_subgroup_gaps$GAP_FROM_PEERS_PP[1]
+largest_negative_peer_gap_subgroup <- peer_subgroup_gaps$SUBGROUP[nrow(peer_subgroup_gaps)]
+largest_negative_peer_gap <- peer_subgroup_gaps$GAP_FROM_PEERS_PP[nrow(peer_subgroup_gaps)]
+
+peer_gap_range <- max(peer_subgroup_gaps$GAP_FROM_PEERS_PP) - min(peer_subgroup_gaps$GAP_FROM_PEERS_PP)
+
+# Get additional peer comparison metrics
+male_peer_gap <- peer_current %>% filter(SUBGROUP == "MALE") %>% pull(GAP_FROM_PEERS_PP)
+female_peer_gap <- peer_current %>% filter(SUBGROUP == "FEMALE") %>% pull(GAP_FROM_PEERS_PP)
+hispanic_peer_gap <- peer_current %>% filter(SUBGROUP == "HISPANIC") %>% pull(GAP_FROM_PEERS_PP)
+white_peer_gap <- peer_current %>% filter(SUBGROUP == "WHITE") %>% pull(GAP_FROM_PEERS_PP)
+ell_peer_gap <- peer_current %>% filter(SUBGROUP == "ELL") %>% pull(GAP_FROM_PEERS_PP)
+disadvantaged_peer_gap <- peer_current %>% filter(SUBGROUP == "DISADVANTAGE") %>% pull(GAP_FROM_PEERS_PP)
+
+male_peer_district_rate <- peer_current %>% filter(SUBGROUP == "MALE") %>% pull(DISTRICT_RATE_PP)
+male_peer_rate <- peer_current %>% filter(SUBGROUP == "MALE") %>% pull(PEER_RATE_PP)
+female_peer_district_rate <- peer_current %>% filter(SUBGROUP == "FEMALE") %>% pull(DISTRICT_RATE_PP)
+female_peer_rate <- peer_current %>% filter(SUBGROUP == "FEMALE") %>% pull(PEER_RATE_PP)
+
+# Count subgroups above and below peer average
+peer_subgroups_above <- sum(peer_subgroup_gaps$GAP_FROM_PEERS_PP > 0)
+peer_subgroups_below <- sum(peer_subgroup_gaps$GAP_FROM_PEERS_PP < 0)
+peer_subgroups_equal <- sum(peer_subgroup_gaps$GAP_FROM_PEERS_PP == 0)
+```
+
+`r params$district_name` is classified as a `r peer_size_band` district based on enrollment size.
+Compared to other `r peer_size_band` districts, `r params$district_name` had a chronic absence rate of `r district_peer_rate`% versus the peer group average of `r peer_average_rate`% in `r current_year`.
+This represents a gap of `r abs(peer_overall_gap)` percentage points `r ifelse(peer_overall_gap > 0, "above", "below")` the peer district average.
+
+```{r peer-gap-details, echo=FALSE, results='asis'}
+if (peer_overall_gap > 0) {
+  cat("The district's chronic absence rate exceeded the peer district average.")
+} else if (peer_overall_gap < 0) {
+  cat("The district's chronic absence rate was below the peer district average.")
+} else {
+  cat("The district's chronic absence rate matched the peer district average.")
+}
+```
+
+Male students in the district had a chronic absence rate of `r male_peer_district_rate`% compared to `r male_peer_rate`% among peer districts.
+This gap of `r abs(male_peer_gap)` percentage points places male students `r ifelse(male_peer_gap > 0, "above", "below")` the peer average.
+Female students had a rate of `r female_peer_district_rate`% compared to the peer average of `r female_peer_rate`%.
+The gap for female students was `r abs(female_peer_gap)` percentage points `r ifelse(female_peer_gap > 0, "above", "below")` the peer average.
+
+Among demographic subgroups, `r largest_positive_peer_gap_subgroup` students had the largest gap above the peer average at `r largest_positive_peer_gap` percentage points.
+`r largest_negative_peer_gap_subgroup` students had the gap furthest below the peer average at `r largest_negative_peer_gap` percentage points.
+The range of gaps across subgroups compared to peer districts spanned `r round(peer_gap_range, 1)` percentage points.
+Of the demographic subgroups analyzed, `r peer_subgroups_above` had chronic absence rates above the peer district average.
+`r peer_subgroups_below` subgroups had rates below the peer average.
+`r if(peer_subgroups_equal > 0) paste(peer_subgroups_equal, "subgroups matched the peer average exactly.") else "No subgroups matched the peer average exactly."`
+
+### District vs Peer Average Gap (Percentage Points)
+
+```{r peer-gaps-table, echo=FALSE}
+# Peer gaps table - District rate minus peer average
+peer_gaps <- params$district_data %>%
+  filter(!is.na(PEER_RATE)) %>%
+  select(YEAR, SUBGROUP, GAP_FROM_PEERS) %>%
+  mutate(GAP = round(GAP_FROM_PEERS * 100, 1)) %>%
+  select(YEAR, SUBGROUP, GAP) %>%
+  arrange(match(SUBGROUP, c("ALL", "MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", "ELL", "DISADVANTAGE", "DISABILITY")), YEAR) %>%
+  tidyr::pivot_wider(names_from = YEAR, values_from = GAP)
+
+kable(peer_gaps, 
+      caption = "Positive values indicate district chronic absence rate exceeds peer district average. Negative values indicate district rate is below peer average.",
+      align = c("l", rep("r", ncol(peer_gaps)-1)))
+```

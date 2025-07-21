@@ -1,19 +1,15 @@
 Package: bueller
-Title: Student Engagement Analysis Package
-Version: 0.1.0
-Authors@R: person("Erik", "Whitfield", email = "erikwhitfield@proton.me", role = c("aut", "cre"))
-Description: Analyze assessment participation and chronic absenteeism patterns.
+Title: Chronic Absenteeism Analysis
+Version: 0.0.0.9000
+Authors@R: 
+    person("Erik", "Whitfield", , "erikwhitfield@proton.me", role = c("aut", "cre"))
+Description: Makes chronic absenteeism reports and stuff.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Imports:
-    jsonlite,
-    stats,
-Suggests:
-    testthat
 Depends: 
-    R (>= 3.5)
+    R (>= 3.5),
+    dplyr,
+    tidyr
 LazyData: true
-LazyDataCompression: xz
-

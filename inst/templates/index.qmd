@@ -1,0 +1,33 @@
+---
+title: "`r params$district_name` Chronic Absence Analysis"
+format: 
+  html:
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+params:
+  district_name: "Default District"
+  district_data: null
+  school_data: null
+  proportions_data: null
+  grades_data: null
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(tidyr)
+library(knitr)
+
+current_year     <- max(params$district_data$YEAR)
+district_current <- params$district_data %>% filter(YEAR == current_year)
+```
+
+{{< include overview.qmd >}}
+
+{{< include comparisons.qmd >}}
+
+{{< include schools.qmd >}}
+
+{{< include grades.qmd >}}
+
+{{< include contributions.qmd >}}

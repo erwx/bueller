@@ -1,0 +1,132 @@
+# School Contributions to District Totals
+
+## School Contributions to District Chronic Absence
+
+```{r contributions-calcs, echo=FALSE}
+# Get current year proportions data
+contributions_current <- params$proportions_data %>%
+  filter(YEAR == current_year, SUBGROUP == "ALL") %>%
+  arrange(desc(SCHOOL_CHRONIC_PROPORTION))
+
+n_schools_contrib <- nrow(contributions_current)
+district_total_enrollment <- contributions_current$DISTRICT_TOTAL_ENROLLMENT[1]
+district_total_chronic <- contributions_current$DISTRICT_TOTAL_CHRONIC[1]
+
+# Top contributor analysis
+top_contributor <- contributions_current %>% slice(1)
+top_school_name <- top_contributor$SCHOOL_NAME
+top_chronic_share <- round(top_contributor$SCHOOL_CHRONIC_PROPORTION * 100, 1)
+top_enrollment_share <- round(top_contributor$SCHOOL_ENROLLMENT_PROPORTION * 100, 1)
+top_chronic_count <- top_contributor$CHRONIC_COUNT
+top_enrollment_count <- top_contributor$ENROLLMENT
+
+# Calculate if disproportionate
+top_ratio <- round(top_chronic_share / top_enrollment_share, 2)
+
+# Top 5 analysis
+top_5_schools <- contributions_current %>% slice(1:5)
+top_5_chronic_share <- round(sum(top_5_schools$SCHOOL_CHRONIC_PROPORTION) * 100, 1)
+top_5_enrollment_share <- round(sum(top_5_schools$SCHOOL_ENROLLMENT_PROPORTION) * 100, 1)
+top_5_chronic_count <- sum(top_5_schools$CHRONIC_COUNT)
+top_5_enrollment_count <- sum(top_5_schools$ENROLLMENT)
+
+# Top 10 analysis
+top_10_schools <- contributions_current %>% slice(1:10)
+top_10_chronic_share <- round(sum(top_10_schools$SCHOOL_CHRONIC_PROPORTION) * 100, 1)
+top_10_enrollment_share <- round(sum(top_10_schools$SCHOOL_ENROLLMENT_PROPORTION) * 100, 1)
+top_10_chronic_count <- sum(top_10_schools$CHRONIC_COUNT)
+
+# Bottom contributor analysis
+bottom_contributor <- contributions_current %>% slice(n())
+bottom_school_name <- bottom_contributor$SCHOOL_NAME
+bottom_chronic_share <- round(bottom_contributor$SCHOOL_CHRONIC_PROPORTION * 100, 1)
+bottom_enrollment_share <- round(bottom_contributor$SCHOOL_ENROLLMENT_PROPORTION * 100, 1)
+bottom_chronic_count <- bottom_contributor$CHRONIC_COUNT
+bottom_enrollment_count <- bottom_contributor$ENROLLMENT
+
+# Range analysis
+chronic_share_range <- round((max(contributions_current$SCHOOL_CHRONIC_PROPORTION) - min(contributions_current$SCHOOL_CHRONIC_PROPORTION)) * 100, 1)
+enrollment_share_range <- round((max(contributions_current$SCHOOL_ENROLLMENT_PROPORTION) - min(contributions_current$SCHOOL_ENROLLMENT_PROPORTION)) * 100, 1)
+
+# Schools with disproportionate contributions (chronic share > enrollment share)
+disproportionate_schools <- contributions_current %>%
+  filter(SCHOOL_CHRONIC_PROPORTION > SCHOOL_ENROLLMENT_PROPORTION)
+n_disproportionate <- nrow(disproportionate_schools)
+
+proportionate_schools <- contributions_current %>%
+  filter(SCHOOL_CHRONIC_PROPORTION <= SCHOOL_ENROLLMENT_PROPORTION)
+n_proportionate <- nrow(proportionate_schools)
+
+# Average ratios
+avg_chronic_enrollment_ratio <- round(mean(contributions_current$SCHOOL_CHRONIC_PROPORTION / contributions_current$SCHOOL_ENROLLMENT_PROPORTION), 2)
+```
+
+`r top_school_name` contributed the largest share of district chronic absence with `r top_chronic_count` chronically absent students, representing `r top_chronic_share`% of all district chronic absence.
+This school enrolled `r top_enrollment_count` students, accounting for `r top_enrollment_share`% of total district enrollment.
+The chronic absence contribution of `r top_chronic_share`% compared to an enrollment share of `r top_enrollment_share`% indicates this school contributed `r top_ratio` times its proportional share based on enrollment.
+
+The top 5 schools by chronic absence contribution accounted for `r top_5_chronic_count` chronically absent students, representing `r top_5_chronic_share`% of district chronic absence.
+These schools enrolled `r top_5_enrollment_count` students, or `r top_5_enrollment_share`% of district enrollment.
+The top 10 schools contributed `r top_10_chronic_count` chronically absent students, representing `r top_10_chronic_share`% of all district chronic absence while accounting for `r top_10_enrollment_share`% of enrollment.
+
+`r bottom_school_name` contributed the smallest share with `r bottom_chronic_count` chronically absent students, representing `r bottom_chronic_share`% of district chronic absence.
+This school enrolled `r bottom_enrollment_count` students, accounting for `r bottom_enrollment_share`% of district enrollment.
+The range of chronic absence contributions spanned from `r bottom_chronic_share`% to `r top_chronic_share`%, a difference of `r chronic_share_range` percentage points.
+Enrollment shares ranged from `r round(min(contributions_current$SCHOOL_ENROLLMENT_PROPORTION) * 100, 1)`% to `r round(max(contributions_current$SCHOOL_ENROLLMENT_PROPORTION) * 100, 1)`%, a difference of `r enrollment_share_range` percentage points.
+
+`r n_disproportionate` schools contributed a higher share of chronic absence than their enrollment share would suggest.
+`r n_proportionate` schools contributed chronic absence shares equal to or less than their enrollment proportions.
+The average ratio of chronic absence share to enrollment share across all schools was `r avg_chronic_enrollment_ratio`.
+Schools with ratios above 1.0 contributed disproportionately to district chronic absence relative to their size.
+
+```{r subgroup-contrib-analysis, echo=FALSE, results='asis'}
+# Analyze patterns across subgroups
+subgroup_patterns <- params$proportions_data %>%
+  filter(YEAR == current_year, SUBGROUP != "ALL") %>%
+  group_by(SUBGROUP) %>%
+  summarise(
+    schools_disproportionate = sum(SCHOOL_CHRONIC_PROPORTION > SCHOOL_ENROLLMENT_PROPORTION),
+    avg_ratio = round(mean(SCHOOL_CHRONIC_PROPORTION / SCHOOL_ENROLLMENT_PROPORTION), 2),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(avg_ratio))
+
+if(nrow(subgroup_patterns) > 0) {
+  highest_ratio_subgroup <- subgroup_patterns$SUBGROUP[1]
+  highest_avg_ratio <- subgroup_patterns$avg_ratio[1]
+  lowest_ratio_subgroup <- subgroup_patterns$SUBGROUP[nrow(subgroup_patterns)]
+  lowest_avg_ratio <- subgroup_patterns$avg_ratio[nrow(subgroup_patterns)]
+  
+  cat("Among demographic subgroups,", highest_ratio_subgroup, "students showed the highest average contribution ratio at", highest_avg_ratio, ".")
+  cat("\n", lowest_ratio_subgroup, "students had the lowest average ratio at", lowest_avg_ratio, ".")
+  cat("\nThis indicates variation in how different demographic groups contribute to chronic absence across schools.")
+}
+```
+
+### School Contribution Ratios by Subgroup
+
+```{r contributions-table, echo=FALSE}
+# Create contributions table - schools as columns, subgroups as rows, showing ratios
+contributions_ratios <- params$proportions_data %>%
+  filter(SUBGROUP %in% c("ALL", "MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", "ELL", "DISADVANTAGE"),
+         YEAR == current_year) %>%
+  mutate(RATIO = round(SCHOOL_CHRONIC_PROPORTION / SCHOOL_ENROLLMENT_PROPORTION, 2)) %>%
+  select(SCHOOL_NAME, SUBGROUP, RATIO)
+
+# Get top 5 schools by overall chronic contribution
+top_5_schools_for_table <- params$proportions_data %>%
+  filter(YEAR == current_year, SUBGROUP == "ALL") %>%
+  arrange(desc(SCHOOL_CHRONIC_PROPORTION)) %>%
+  slice(1:5) %>%
+  pull(SCHOOL_NAME)
+
+# Filter to top 5 schools and pivot
+contributions_table_final <- contributions_ratios %>%
+  filter(SCHOOL_NAME %in% top_5_schools_for_table) %>%
+  arrange(match(SUBGROUP, c("ALL", "MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", "ELL", "DISADVANTAGE"))) %>%
+  tidyr::pivot_wider(names_from = SCHOOL_NAME, values_from = RATIO)
+
+kable(contributions_table_final,
+      caption = "Contribution ratios for top 5 schools by subgroup.",
+      align = c("l", rep("r", ncol(contributions_table_final)-1)))
+```

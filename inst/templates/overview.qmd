@@ -1,0 +1,227 @@
+# District Overview
+
+## Basic Enrollment and Chronic Absence Metrics
+
+**Current Year: `r current_year`**
+
+In `r current_year`, `r params$district_name` enrolled `r district_current %>% filter(SUBGROUP == "ALL") %>% pull(ENROLLMENT)` students across `r district_current %>% filter(SUBGROUP == "ALL") %>% pull(N_SCHOOLS)` schools.
+Of these students, `r district_current %>% filter(SUBGROUP == "ALL") %>% pull(CHRONIC_COUNT)` were chronically absent, representing a district-wide chronic absence rate of `r round((district_current %>% filter(SUBGROUP == "ALL") %>% pull(CHRONIC_RATE)) * 100, 1)`%.
+
+```{r enrollment-breakdown, echo=FALSE}
+male_enrollment <- district_current %>% filter(SUBGROUP == "MALE") %>% pull(ENROLLMENT)
+female_enrollment <- district_current %>% filter(SUBGROUP == "FEMALE") %>% pull(ENROLLMENT)
+hispanic_enrollment <- district_current %>% filter(SUBGROUP == "HISPANIC") %>% pull(ENROLLMENT)
+white_enrollment <- district_current %>% filter(SUBGROUP == "WHITE") %>% pull(ENROLLMENT)
+ell_enrollment <- district_current %>% filter(SUBGROUP == "ELL") %>% pull(ENROLLMENT)
+disadvantaged_enrollment <- district_current %>% filter(SUBGROUP == "DISADVANTAGE") %>% pull(ENROLLMENT)
+
+male_chronic <- district_current %>% filter(SUBGROUP == "MALE") %>% pull(CHRONIC_COUNT)
+female_chronic <- district_current %>% filter(SUBGROUP == "FEMALE") %>% pull(CHRONIC_COUNT)
+hispanic_chronic <- district_current %>% filter(SUBGROUP == "HISPANIC") %>% pull(CHRONIC_COUNT)
+white_chronic <- district_current %>% filter(SUBGROUP == "WHITE") %>% pull(CHRONIC_COUNT)
+ell_chronic <- district_current %>% filter(SUBGROUP == "ELL") %>% pull(CHRONIC_COUNT)
+disadvantaged_chronic <- district_current %>% filter(SUBGROUP == "DISADVANTAGE") %>% pull(CHRONIC_COUNT)
+
+male_rate <- round((district_current %>% filter(SUBGROUP == "MALE") %>% pull(CHRONIC_RATE)) * 100, 1)
+female_rate <- round((district_current %>% filter(SUBGROUP == "FEMALE") %>% pull(CHRONIC_RATE)) * 100, 1)
+hispanic_rate <- round((district_current %>% filter(SUBGROUP == "HISPANIC") %>% pull(CHRONIC_RATE)) * 100, 1)
+white_rate <- round((district_current %>% filter(SUBGROUP == "WHITE") %>% pull(CHRONIC_RATE)) * 100, 1)
+ell_rate <- round((district_current %>% filter(SUBGROUP == "ELL") %>% pull(CHRONIC_RATE)) * 100, 1)
+disadvantaged_rate <- round((district_current %>% filter(SUBGROUP == "DISADVANTAGE") %>% pull(CHRONIC_RATE)) * 100, 1)
+
+total_enrollment <- district_current %>% filter(SUBGROUP == "ALL") %>% pull(ENROLLMENT)
+```
+
+The district's student population includes `r male_enrollment` male students (`r round((male_enrollment/total_enrollment)*100, 1)`% of total enrollment) and `r female_enrollment` female students (`r round((female_enrollment/total_enrollment)*100, 1)`% of total enrollment).
+Among male students, `r male_chronic` were chronically absent, yielding a chronic absence rate of `r male_rate`%.
+Female students had `r female_chronic` chronically absent, resulting in a chronic absence rate of `r female_rate`%.
+
+Hispanic students represent `r hispanic_enrollment` students (`r round((hispanic_enrollment/total_enrollment)*100, 1)`% of district enrollment) with `r hispanic_chronic` chronically absent students and a chronic absence rate of `r hispanic_rate`%.
+White students number `r white_enrollment` (`r round((white_enrollment/total_enrollment)*100, 1)`% of enrollment) with `r white_chronic` chronically absent and a rate of `r white_rate`%.
+
+English language learners comprise `r ell_enrollment` students (`r round((ell_enrollment/total_enrollment)*100, 1)`% of total enrollment).
+Among this population, `r ell_chronic` students were chronically absent, producing a chronic absence rate of `r ell_rate`%.
+Economically disadvantaged students total `r disadvantaged_enrollment` (`r round((disadvantaged_enrollment/total_enrollment)*100, 1)`% of enrollment) with `r disadvantaged_chronic` chronically absent students and a rate of `r disadvantaged_rate`%.
+
+The average school in the district enrolled `r round(total_enrollment / (district_current %>% filter(SUBGROUP == "ALL") %>% pull(N_SCHOOLS)), 0)` students.
+Chronic absence affected students across all demographic groups, with rates ranging from `r round((district_current %>% filter(SUBGROUP != "ALL") %>% pull(CHRONIC_RATE) %>% min()) * 100, 1)`% to `r round((district_current %>% filter(SUBGROUP != "ALL") %>% pull(CHRONIC_RATE) %>% max()) * 100, 1)`% across subgroups.
+These patterns reflect both the scale and distribution of chronic absence challenges within `r params$district_name`.
+
+### District Totals by Subgroup
+
+```{r district-totals, echo=FALSE}
+district_totals <- district_current %>%
+  select(SUBGROUP, ENROLLMENT, CHRONIC_COUNT, CHRONIC_RATE) %>%
+  mutate(CHRONIC_RATE = round(CHRONIC_RATE * 100, 1)) %>%
+  arrange(match(SUBGROUP, c("ALL", "MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", "ELL", "DISADVANTAGE", "DISABILITY")))
+
+kable(district_totals, 
+      col.names = c("Subgroup", "Enrollment", "Chronic Count", "Chronic Rate (%)"),
+      align = c("l", "r", "r", "r"))
+```
+
+### School-Level Variance
+
+```{r school-variance-calcs, echo=FALSE}
+all_variance <- district_current %>% filter(SUBGROUP == "ALL")
+min_rate <- round(all_variance$SCHOOL_RATE_MIN * 100, 1)
+max_rate <- round(all_variance$SCHOOL_RATE_MAX * 100, 1)
+sd_rate <- round(all_variance$SCHOOL_RATE_SD * 100, 2)
+q25_rate <- round(all_variance$SCHOOL_RATE_Q25 * 100, 1)
+q75_rate <- round(all_variance$SCHOOL_RATE_Q75 * 100, 1)
+n_schools <- all_variance$N_SCHOOLS
+
+# Calculate additional metrics
+rate_range <- max_rate - min_rate
+iqr_range <- q75_rate - q25_rate
+
+# Get subgroup with highest and lowest variance
+subgroup_variance <- district_current %>%
+  filter(SUBGROUP != "ALL") %>%
+  arrange(desc(SCHOOL_RATE_SD))
+
+highest_var_subgroup <- subgroup_variance$SUBGROUP[1]
+highest_var_sd <- round(subgroup_variance$SCHOOL_RATE_SD[1] * 100, 2)
+lowest_var_subgroup <- subgroup_variance$SUBGROUP[nrow(subgroup_variance)]
+lowest_var_sd <- round(subgroup_variance$SCHOOL_RATE_SD[nrow(subgroup_variance)] * 100, 2)
+
+# Schools above/below district average
+district_avg <- round((district_current %>% filter(SUBGROUP == "ALL") %>% pull(CHRONIC_RATE)) * 100, 1)
+schools_above_avg <- round((q75_rate - district_avg) / (max_rate - min_rate) * n_schools, 0)
+schools_below_avg <- n_schools - schools_above_avg
+```
+
+Chronic absence rates varied across the `r n_schools` schools in the district.
+The school with the lowest chronic absence rate recorded `r min_rate`% while the highest rate was `r max_rate`%.
+This represents a range of `r rate_range` percentage points between the lowest and highest performing schools.
+The standard deviation of school rates was `r sd_rate` percentage points across all schools.
+
+The first quartile of schools had chronic absence rates at or below `r q25_rate`%.
+The third quartile threshold was `r q75_rate`%.
+The interquartile range spanned `r iqr_range` percentage points, indicating the spread of rates among the middle 50% of schools.
+Half of all schools fell between these quartile boundaries.
+
+Among demographic subgroups, `r highest_var_subgroup` students showed the highest variance across schools with a standard deviation of `r highest_var_sd` percentage points.
+`r lowest_var_subgroup` students demonstrated the lowest variance with a standard deviation of `r lowest_var_sd` percentage points.
+This difference indicates that some subgroups experience more uniform chronic absence patterns across schools than others.
+
+The district-wide average chronic absence rate was `r district_avg`%.
+Schools in the upper quartile exceeded this average by `r round(q75_rate - district_avg, 1)` percentage points.
+Schools in the lower quartile fell below the average by `r round(district_avg - q25_rate, 1)` percentage points.
+The gap between high-performing and low-performing schools represents `r round((max_rate - min_rate) / district_avg * 100, 0)`% of the district average rate.
+
+These patterns demonstrate the distribution of chronic absence across the district's school system.
+Some schools serve student populations with chronic absence rates well below the district average.
+Other schools face chronic absence rates that exceed the district norm by substantial margins.
+
+```{r district-variance, echo=FALSE}
+district_variance <- district_current %>%
+  select(SUBGROUP, SCHOOL_RATE_SD, SCHOOL_RATE_MIN, SCHOOL_RATE_MAX, 
+         SCHOOL_RATE_Q25, SCHOOL_RATE_Q75, N_SCHOOLS) %>%
+  mutate(
+    SCHOOL_RATE_SD = round(SCHOOL_RATE_SD * 100, 2),
+    SCHOOL_RATE_MIN = round(SCHOOL_RATE_MIN * 100, 1),
+    SCHOOL_RATE_MAX = round(SCHOOL_RATE_MAX * 100, 1),
+    SCHOOL_RATE_Q25 = round(SCHOOL_RATE_Q25 * 100, 1),
+    SCHOOL_RATE_Q75 = round(SCHOOL_RATE_Q75 * 100, 1)
+  ) %>%
+  arrange(match(SUBGROUP, c("ALL", "MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", "ELL", "DISADVANTAGE", "DISABILITY")))
+
+kable(district_variance,
+      col.names = c("Subgroup", "SD (%)", "Min (%)", "Max (%)", "Q25 (%)", "Q75 (%)", "Schools"),
+      align = c("l", "r", "r", "r", "r", "r", "r"))
+```
+
+### Year-over-Year Changes
+
+```{r yoy-detailed-calcs, echo=FALSE, results='asis'}
+# Get most recent year change data for all subgroups
+recent_changes_all <- params$district_data %>%
+  filter(!is.na(CHRONIC_RATE_CHANGE)) %>%
+  arrange(desc(YEAR)) %>%
+  group_by(SUBGROUP) %>%
+  slice(1) %>%
+  ungroup()
+
+# Overall district changes
+overall_changes <- recent_changes_all %>% filter(SUBGROUP == "ALL")
+
+if (nrow(overall_changes) > 0) {
+  enrollment_change <- overall_changes$ENROLLMENT_CHANGE
+  chronic_count_change <- overall_changes$CHRONIC_COUNT_CHANGE
+  rate_change <- round(overall_changes$CHRONIC_RATE_CHANGE * 100, 1)
+  prev_year <- overall_changes$YEAR - 1
+  current_year_yoy <- overall_changes$YEAR
+  prev_enrollment <- overall_changes$ENROLLMENT - enrollment_change
+  prev_chronic_count <- overall_changes$CHRONIC_COUNT - chronic_count_change
+  prev_rate <- round((overall_changes$CHRONIC_RATE - overall_changes$CHRONIC_RATE_CHANGE) * 100, 1)
+  current_enrollment <- overall_changes$ENROLLMENT
+  current_chronic_count <- overall_changes$CHRONIC_COUNT
+  current_rate <- round(overall_changes$CHRONIC_RATE * 100, 1)
+  
+  # Subgroup changes
+  subgroup_changes <- recent_changes_all %>% 
+    filter(SUBGROUP %in% c("MALE", "FEMALE", "HISPANIC", "WHITE", "ELL", "DISADVANTAGE")) %>%
+    mutate(rate_change_pp = round(CHRONIC_RATE_CHANGE * 100, 1)) %>%
+    arrange(desc(rate_change_pp))
+  
+  largest_increase_subgroup <- subgroup_changes$SUBGROUP[1]
+  largest_increase_change <- subgroup_changes$rate_change_pp[1]
+  largest_decrease_subgroup <- subgroup_changes$SUBGROUP[nrow(subgroup_changes)]
+  largest_decrease_change <- subgroup_changes$rate_change_pp[nrow(subgroup_changes)]
+  
+  # School-level variance changes
+  variance_change <- round((overall_changes$SCHOOL_RATE_SD - (overall_changes$SCHOOL_RATE_SD - overall_changes$SCHOOL_RATE_SD_CHANGE)) * 100, 2)
+  q25_change <- round(overall_changes$SCHOOL_RATE_Q25_CHANGE * 100, 1)
+  q75_change <- round(overall_changes$SCHOOL_RATE_Q75_CHANGE * 100, 1)
+  
+  cat("From", prev_year, "to", current_year_yoy, ", total district enrollment changed from", prev_enrollment, "to", current_enrollment, "students.")
+  cat("\nThis represents an enrollment change of", enrollment_change, "students.")
+  cat("\nThe number of chronically absent students changed from", prev_chronic_count, "in", prev_year, "to", current_chronic_count, "in", current_year_yoy, ".")
+  cat("\nThis represents a change of", chronic_count_change, "chronically absent students.")
+  
+  cat("\n\nThe district chronic absence rate changed from", prev_rate, "% in", prev_year, "to", current_rate, "% in", current_year_yoy, ".")
+  cat("\nThis represents a change of", rate_change, "percentage points.")
+  
+  if (rate_change > 0) {
+    cat("\nThe district experienced an increase in chronic absence rate.")
+  } else if (rate_change < 0) {
+    cat("\nThe district experienced a decrease in chronic absence rate.")
+  } else {
+    cat("\nThe district chronic absence rate remained unchanged.")
+  }
+  
+  cat("\n\nAmong demographic subgroups,", largest_increase_subgroup, "students had the largest rate increase at", largest_increase_change, "percentage points.")
+  cat("\n", largest_decrease_subgroup, "students had the smallest rate change at", largest_decrease_change, "percentage points.")
+  
+  # Calculate range of subgroup changes
+  subgroup_range <- max(subgroup_changes$rate_change_pp) - min(subgroup_changes$rate_change_pp)
+  cat("\nSubgroup rate changes ranged from", min(subgroup_changes$rate_change_pp), "to", max(subgroup_changes$rate_change_pp), "percentage points.")
+  cat("\nThis represents a", round(subgroup_range, 1), "percentage point spread in rate changes across demographic groups.")
+  
+  if (!is.na(variance_change)) {
+    cat("\n\nThe standard deviation of school chronic absence rates changed by", abs(variance_change), "percentage points.")
+    if (variance_change > 0) {
+      cat("\nThis indicates increased variation among schools.")
+    } else if (variance_change < 0) {
+      cat("\nThis indicates decreased variation among schools.")
+    }
+  }
+  
+  if (!is.na(q25_change) && !is.na(q75_change)) {
+    cat("\nThe first quartile of school rates changed by", q25_change, "percentage points.")
+    cat("\nThe third quartile of school rates changed by", q75_change, "percentage points.")
+    
+    quartile_gap_change <- q75_change - q25_change
+    if (quartile_gap_change > 0) {
+      cat("\nThe gap between high and low performing schools increased by", round(quartile_gap_change, 1), "percentage points.")
+    } else if (quartile_gap_change < 0) {
+      cat("\nThe gap between high and low performing schools decreased by", round(abs(quartile_gap_change), 1), "percentage points.")
+    }
+  }
+  
+} else {
+  cat("No year-over-year comparison data available for this district.")
+  cat("\nThis indicates that the district has data for only one year in the dataset.")
+}
+```

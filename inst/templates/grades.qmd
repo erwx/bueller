@@ -1,0 +1,190 @@
+# Grade-Level Patterns
+
+## Chronic Absence Rates by Grade Level
+
+```{r grade-level-calcs, echo=FALSE}
+# Get current year grade data
+grade_current <- params$grades_data %>% 
+  filter(YEAR == current_year, SUBGROUP != "ALL") %>%
+  arrange(SUBGROUP)
+
+n_grades <- nrow(grade_current)
+total_enrollment_grades <- sum(grade_current$ENROLLMENT)
+total_chronic_grades <- sum(grade_current$CHRONIC_COUNT)
+overall_rate_grades <- round((total_chronic_grades / total_enrollment_grades) * 100, 1)
+
+# Find grade with highest and lowest rates
+highest_grade <- grade_current %>% arrange(desc(CHRONIC_RATE)) %>% slice(1)
+lowest_grade <- grade_current %>% arrange(CHRONIC_RATE) %>% slice(1)
+
+highest_grade_name <- gsub("GRADE_", "Grade ", highest_grade$SUBGROUP)
+highest_grade_rate <- round(highest_grade$CHRONIC_RATE * 100, 1)
+highest_grade_count <- highest_grade$CHRONIC_COUNT
+highest_grade_enrollment <- highest_grade$ENROLLMENT
+
+lowest_grade_name <- gsub("GRADE_", "Grade ", lowest_grade$SUBGROUP)
+lowest_grade_rate <- round(lowest_grade$CHRONIC_RATE * 100, 1)
+lowest_grade_count <- lowest_grade$CHRONIC_COUNT
+lowest_grade_enrollment <- lowest_grade$ENROLLMENT
+
+# Calculate range and patterns
+rate_range_grades <- highest_grade_rate - lowest_grade_rate
+mean_grade_rate <- round(mean(grade_current$CHRONIC_RATE) * 100, 1)
+median_grade_rate <- round(median(grade_current$CHRONIC_RATE) * 100, 1)
+
+# Calculate grade level patterns
+grade_rates <- grade_current %>%
+  mutate(
+    GRADE_NUM = as.numeric(gsub("GRADE_", "", SUBGROUP)),
+    RATE_PERCENT = round(CHRONIC_RATE * 100, 1)
+  ) %>%
+  arrange(GRADE_NUM)
+
+# Find enrollment patterns
+largest_grade <- grade_current %>% arrange(desc(ENROLLMENT)) %>% slice(1)
+smallest_grade <- grade_current %>% arrange(ENROLLMENT) %>% slice(1)
+
+largest_grade_name <- gsub("GRADE_", "Grade ", largest_grade$SUBGROUP)
+largest_grade_enrollment <- largest_grade$ENROLLMENT
+smallest_grade_name <- gsub("GRADE_", "Grade ", smallest_grade$SUBGROUP)
+smallest_grade_enrollment <- smallest_grade$ENROLLMENT
+
+# Calculate grades above/below district average
+district_avg_rate <- round((params$grades_data %>% filter(YEAR == current_year, SUBGROUP == "ALL") %>% pull(CHRONIC_RATE)) * 100, 1)
+grades_above_avg <- sum(grade_rates$RATE_PERCENT > district_avg_rate)
+grades_below_avg <- sum(grade_rates$RATE_PERCENT < district_avg_rate)
+grades_at_avg <- sum(grade_rates$RATE_PERCENT == district_avg_rate)
+
+# Standard deviation of grade rates
+grade_rate_sd <- round(sd(grade_current$CHRONIC_RATE) * 100, 2)
+```
+
+Chronic absence rates varied across `r n_grades` grade levels in `r current_year`.
+`r highest_grade_name` had the highest chronic absence rate at `r highest_grade_rate`% with `r highest_grade_count` chronically absent students out of `r highest_grade_enrollment` enrolled.
+`r lowest_grade_name` had the lowest rate at `r lowest_grade_rate`% with `r lowest_grade_count` chronically absent students out of `r lowest_grade_enrollment` enrolled.
+This represents a range of `r rate_range_grades` percentage points between the highest and lowest performing grades.
+
+The mean chronic absence rate across grade levels was `r mean_grade_rate`% while the median rate was `r median_grade_rate`%.
+The standard deviation of grade-level rates was `r grade_rate_sd` percentage points.
+Total enrollment across all grades was `r total_enrollment_grades` students with `r total_chronic_grades` chronically absent.
+This yielded an overall rate of `r overall_rate_grades`% across all grade levels combined.
+
+`r largest_grade_name` had the largest enrollment with `r largest_grade_enrollment` students.
+`r smallest_grade_name` had the smallest enrollment with `r smallest_grade_enrollment` students.
+The difference between the largest and smallest grade enrollments was `r largest_grade_enrollment - smallest_grade_enrollment` students.
+Enrollment varied by a factor of `r round(largest_grade_enrollment / smallest_grade_enrollment, 1)` between the largest and smallest grades.
+
+The district average chronic absence rate was `r district_avg_rate`%.
+`r grades_above_avg` grades exceeded this average while `r grades_below_avg` grades fell below the average.
+`r if(grades_at_avg > 0) paste(grades_at_avg, "grades matched the district average exactly.") else "No grades matched the district average exactly."`
+
+```{r grade-pattern-analysis, echo=FALSE, results='asis'}
+# Analyze grade progression pattern
+elementary_grades <- grade_rates %>% filter(GRADE_NUM <= 5)
+middle_grades <- grade_rates %>% filter(GRADE_NUM >= 6 & GRADE_NUM <= 8)  
+high_school_grades <- grade_rates %>% filter(GRADE_NUM >= 9)
+
+if(nrow(elementary_grades) > 0 & nrow(middle_grades) > 0 & nrow(high_school_grades) > 0) {
+  elem_avg <- round(mean(elementary_grades$RATE_PERCENT), 1)
+  middle_avg <- round(mean(middle_grades$RATE_PERCENT), 1)
+  high_avg <- round(mean(high_school_grades$RATE_PERCENT), 1)
+  
+  cat("Elementary grades (K-5) averaged", elem_avg, "% chronic absence.")
+  cat("\nMiddle school grades (6-8) averaged", middle_avg, "% chronic absence.")
+  cat("\nHigh school grades (9-12) averaged", high_avg, "% chronic absence.")
+  
+  if(high_avg > middle_avg & middle_avg > elem_avg) {
+    cat("\nChronic absence rates increased with grade level.")
+  } else if(high_avg < middle_avg & middle_avg < elem_avg) {
+    cat("\nChronic absence rates decreased with grade level.")
+  } else {
+    cat("\nChronic absence rates showed mixed patterns across grade levels.")
+  }
+}
+```
+
+### Grade-Level Chronic Absence Rates by Year (%)
+
+```{r grade-metrics-table, echo=FALSE}
+# Create grade-level metrics table with years as columns - rates only
+grade_rates_table <- params$grades_data %>%
+  filter(SUBGROUP != "ALL") %>%
+  select(YEAR, SUBGROUP, CHRONIC_RATE) %>%
+  mutate(
+    GRADE_DISPLAY = gsub("GRADE_", "Grade ", SUBGROUP),
+    CHRONIC_RATE_PERCENT = round(CHRONIC_RATE * 100, 1)
+  ) %>%
+  arrange(as.numeric(gsub("GRADE_", "", SUBGROUP)), YEAR) %>%
+  select(GRADE_DISPLAY, YEAR, CHRONIC_RATE_PERCENT) %>%
+  tidyr::pivot_wider(names_from = YEAR, values_from = CHRONIC_RATE_PERCENT)
+
+kable(grade_rates_table,
+      caption = "Chronic absence rates (%) by grade level across years.",
+      align = c("l", rep("r", ncol(grade_rates_table)-1)))
+```
+
+## Grade-Level Trends Over Time
+
+```{r grade-trends-calcs, echo=FALSE}
+# Get year-over-year changes for grades
+grade_changes <- params$grades_data %>%
+  filter(SUBGROUP != "ALL", !is.na(RATE_CHANGE)) %>%
+  arrange(desc(YEAR)) %>%
+  group_by(SUBGROUP) %>%
+  slice(1) %>%
+  ungroup()
+
+if(nrow(grade_changes) > 0) {
+  # Find grade with largest increase and decrease
+  largest_increase_grade <- grade_changes %>% arrange(desc(RATE_CHANGE)) %>% slice(1)
+  largest_decrease_grade <- grade_changes %>% arrange(RATE_CHANGE) %>% slice(1)
+  
+  increase_grade_name <- gsub("GRADE_", "Grade ", largest_increase_grade$SUBGROUP)
+  increase_change <- round(largest_increase_grade$RATE_CHANGE * 100, 1)
+  increase_enrollment_change <- largest_increase_grade$ENROLLMENT_CHANGE
+  
+  decrease_grade_name <- gsub("GRADE_", "Grade ", largest_decrease_grade$SUBGROUP)
+  decrease_change <- round(largest_decrease_grade$RATE_CHANGE * 100, 1)
+  decrease_enrollment_change <- largest_decrease_grade$ENROLLMENT_CHANGE
+  
+  # Calculate overall patterns
+  grades_with_increases <- sum(grade_changes$RATE_CHANGE > 0)
+  grades_with_decreases <- sum(grade_changes$RATE_CHANGE < 0)
+  grades_unchanged <- sum(grade_changes$RATE_CHANGE == 0)
+  
+  # Range of changes
+  change_range <- round((max(grade_changes$RATE_CHANGE) - min(grade_changes$RATE_CHANGE)) * 100, 1)
+  
+  most_recent_year <- max(grade_changes$YEAR)
+  previous_year <- most_recent_year - 1
+}
+```
+
+```{r grade-trends-text, echo=FALSE, results='asis'}
+if(nrow(grade_changes) > 0) {
+  cat("From", previous_year, "to", most_recent_year, ", grade-level chronic absence rates showed varying patterns of change.")
+  cat("\n", increase_grade_name, "had the largest rate increase at", increase_change, "percentage points.")
+  cat("\nEnrollment in", increase_grade_name, "changed by", increase_enrollment_change, "students during this period.")
+  cat("\n", decrease_grade_name, "had the largest rate change in the opposite direction at", decrease_change, "percentage points.")
+  cat("\nEnrollment in", decrease_grade_name, "changed by", decrease_enrollment_change, "students.")
+  
+  cat("\n\nOf the", nrow(grade_changes), "grades with data,", grades_with_increases, "experienced rate increases.")
+  cat("\n", grades_with_decreases, "grades experienced rate decreases.")
+  if(grades_unchanged > 0) {
+    cat("\n", grades_unchanged, "grades had no change in chronic absence rates.")
+  }
+  
+  cat("\nRate changes across grades ranged from", min(round(grade_changes$RATE_CHANGE * 100, 1)), "to", max(round(grade_changes$RATE_CHANGE * 100, 1)), "percentage points.")
+  cat("\nThis represents a spread of", change_range, "percentage points in rate changes across grade levels.")
+  
+  # Calculate average changes
+  avg_enrollment_change <- round(mean(grade_changes$ENROLLMENT_CHANGE, na.rm = TRUE), 0)
+  avg_rate_change <- round(mean(grade_changes$RATE_CHANGE, na.rm = TRUE) * 100, 1)
+  
+  cat("\nThe average enrollment change across grades was", avg_enrollment_change, "students.")
+  cat("\nThe average rate change across grades was", avg_rate_change, "percentage points.")
+} else {
+  cat("No year-over-year comparison data available for grade-level analysis.")
+  cat("\nThis indicates that grade-level data is only available for one year.")
+}
+```
