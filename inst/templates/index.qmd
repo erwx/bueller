@@ -5,6 +5,7 @@ format:
     toc: true
     toc-depth: 2
     embed-resources: true
+    theme: minty 
 params:
   district_name: "Default District"
   district_data: null
