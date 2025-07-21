@@ -96,7 +96,7 @@ if(nrow(subgroup_patterns) > 0) {
   highest_avg_ratio <- subgroup_patterns$avg_ratio[1]
   lowest_ratio_subgroup <- subgroup_patterns$SUBGROUP[nrow(subgroup_patterns)]
   lowest_avg_ratio <- subgroup_patterns$avg_ratio[nrow(subgroup_patterns)]
-  
+
   cat("Among demographic subgroups,", highest_ratio_subgroup, "students showed the highest average contribution ratio at", highest_avg_ratio, ".")
   cat("\n", lowest_ratio_subgroup, "students had the lowest average ratio at", lowest_avg_ratio, ".")
   cat("\nThis indicates variation in how different demographic groups contribute to chronic absence across schools.")
