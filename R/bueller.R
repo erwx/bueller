@@ -51,10 +51,25 @@ bueller <- function(data_file, district_name) {
   }
   
   # Validate data structure
-  required_cols <- c("STUDENT_ID", "YEAR", "DISTRICT_ID", "DISTRICT_NAME", 
-                     "SCHOOL_ID", "SCHOOL_NAME", "GRADE", "CHRONIC_ABSENT",
-                     "MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK",
-                     "ELL", "DISADVANTAGE", "DISABILITY")
+  required_cols <- c(
+    "STUDENT_ID",
+    "YEAR",
+    "DISTRICT_ID",
+    "DISTRICT_NAME", 
+    "SCHOOL_ID",
+    "SCHOOL_NAME",
+    "GRADE",
+    "CHRONIC_ABSENT",
+    "MALE",
+    "FEMALE",
+    "HISPANIC",
+    "WHITE",
+    "ASIAN",
+    "BLACK",
+    "ELL",
+    "DISADVANTAGE",
+    "DISABILITY"
+  )
   
   missing_cols <- setdiff(required_cols, names(full_data))
   if (length(missing_cols) > 0) {
@@ -64,16 +79,23 @@ bueller <- function(data_file, district_name) {
   # Check if district exists
   if (!district_name %in% full_data$DISTRICT_NAME) {
     available_districts <- sort(unique(full_data$DISTRICT_NAME))
-    stop("District '", district_name, "' not found in data. Available districts:\n", 
-         paste(head(available_districts, 10), collapse = "\n"),
-         if(length(available_districts) > 10) paste0("\n... and ", length(available_districts) - 10, " more"))
+    stop("District '", district_name, "' not found in data. Available districts:\n")
   }
   
   # Run analysis
   cat("Running analysis for", district_name, "...\n")
   
-  subgroups <- c("MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", 
-                 "ELL", "DISADVANTAGE", "DISABILITY")
+  subgroups <- c(
+    "MALE",
+    "FEMALE",
+    "HISPANIC",
+    "WHITE",
+    "ASIAN",
+    "BLACK", 
+    "ELL",
+    "DISADVANTAGE",
+    "DISABILITY"
+  )
   
   results <- analysis(full_data, district_name, subgroups)
   
@@ -85,10 +107,10 @@ bueller <- function(data_file, district_name) {
   output_file <- paste0(safe_district_name, "_chronic_absence_report.html")
   
   # Get template directory
-  template_dir <- system.file("templates", package = "chronic")
+  template_dir <- system.file("templates", package = "bueller")
   
   if (!dir.exists(template_dir)) {
-    stop("Template directory not found. Please ensure the chronic package is properly installed.")
+    stop("Template directory not found. Please ensure the bueller package is properly installed.")
   }
   
   # Check if Quarto is available
@@ -150,9 +172,12 @@ bueller <- function(data_file, district_name) {
     unlink(file.path(template_dir, "grades_data.rds"))
   }, add = TRUE)
   
-  render_result <- system2("quarto", 
-                          args = c("render", "index.qmd", "--to", "html"),
-                          stdout = TRUE, stderr = TRUE)
+  render_result <- system2(
+    "quarto", 
+    args = c("render", "index.qmd", "--to", "html"),
+    stdout = TRUE,
+    stderr = TRUE
+  )
   
   if (!is.null(attr(render_result, "status")) && attr(render_result, "status") != 0) {
     stop("Report rendering failed. Quarto output:\n", paste(render_result, collapse = "\n"))

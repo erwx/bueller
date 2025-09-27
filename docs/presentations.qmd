@@ -1,5 +1,0 @@
----
-title: ""
----
-
-[Intern Update 3](p3.html)
