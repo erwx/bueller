@@ -4,7 +4,7 @@
 \alias{bueller}
 \title{Generate chronic absence reports for a district}
 \usage{
-bueller(data_file, district_name)
+bueller(data_file = NULL, district_name)
 }
 \arguments{
 \item{data_file}{Character string specifying the path to the data file containing
@@ -25,9 +25,6 @@ and renders HTML reports using parameterized Quarto templates.
 \dontrun{
 # Generate report for a district
 report_path <- bueller("data/chronic_absence_data.rds", "Springfield Elementary")
-
-# View generated file
-print(report_path)
 
 # Open in browser
 browseURL(report_path)

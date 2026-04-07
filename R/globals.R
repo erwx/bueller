@@ -34,6 +34,10 @@ utils::globalVariables(
     "DISTRICT_TOTAL_CHRONIC",
     "SCHOOL_ENROLLMENT_PROPORTION",
     "SCHOOL_CHRONIC_PROPORTION",
-    "GRADE"
+    "GRADE",
+    "sim"
   )
 )
+
+SUBGROUPS <- c("MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK",
+               "ELL", "DISADVANTAGE", "DISABILITY")

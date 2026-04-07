@@ -41,8 +41,6 @@
 #' @importFrom utils globalVariables 
 #'
 #' @keywords internal
-subgroups <- c("MALE", "FEMALE", "HISPANIC", "WHITE", "ASIAN", "BLACK", 
-               "ELL", "DISADVANTAGE", "DISABILITY")
 
 analysis <- function(full_data, district_name, subgroups) {
   # Helper function to calculate school-level data
