@@ -7,6 +7,8 @@
 #'   \describe{
 #'     \item{STUDENT_ID}{Unique student identifier}
 #'     \item{YEAR}{Academic year}
+#'     \item{COUNTY_ID}{Unique county identifier}
+#'     \item{COUNTY_NAME}{County name}
 #'     \item{DISTRICT_ID}{Unique district identifier}
 #'     \item{DISTRICT_NAME}{District name}
 #'     \item{SCHOOL_ID}{Unique school identifier}
@@ -23,6 +25,7 @@
 #'     \item{DISADVANTAGE}{1 if economically disadvantaged, 0 otherwise}
 #'     \item{DISABILITY}{1 if has a disability, 0 otherwise}
 #'   }
+#'
 #' @name sim
 #' @docType data
 NULL
